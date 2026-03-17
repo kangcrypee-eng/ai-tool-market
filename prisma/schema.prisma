@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ToolStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+}
+
+enum PaymentType {
+  ONE_TIME
+  SUBSCRIPTION
+}
+
+enum PostType {
+  TOOL_SHARE
+  TIP
+  QUESTION
+  REVIEW
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  bio       String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tools         Tool[]
+  subscriptions Subscription[]
+  payments      Payment[]
+  ownerships    UserToolOwnership[]
+  posts         Post[]
+  comments      Comment[]
+  postLikes     PostLike[]
+}
+
+model Tool {
+  id                    String     @id @default(uuid())
+  name                  String
+  description           String
+  longDescription       String?
+  imageUrl              String?
+  toolUrl               String?    // 실제 툴 링크 (노션, 구글독스, 웹앱 URL 등)
+  category              String     @default("general")
+  creatorId             String
+  isOneTimeEnabled      Boolean    @default(false)
+  oneTimePrice          Int?
+  isSubscriptionEnabled Boolean    @default(false)
+  subscriptionPrice     Int?
+  status                ToolStatus @default(PENDING)
+  freeTrialDays         Int        @default(30)
+  publishedAt           DateTime   @default(now())
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  creator       User               @relation(fields: [creatorId], references: [id])
+  subscriptions Subscription[]
+  payments      Payment[]
+  ownerships    UserToolOwnership[]
+  posts         Post[]
+  comments      Comment[]
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  authorId  String
+  toolId    String?
+  type      PostType
+  title     String
+  body      String
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User       @relation(fields: [authorId], references: [id])
+  tool     Tool?      @relation(fields: [toolId], references: [id])
+  comments Comment[]
+  likes    PostLike[]
+}
+
+model PostLike {
+  id     String @id @default(uuid())
+  userId String
+  postId String
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  toolId    String?
+  postId    String?
+  content   String
+  rating    Int?
+  createdAt DateTime @default(now())
+
+  user User  @relation(fields: [userId], references: [id])
+  tool Tool? @relation(fields: [toolId], references: [id])
+  post Post? @relation(fields: [postId], references: [id])
+}
+
+model Subscription {
+  id            String             @id @default(uuid())
+  userId        String
+  toolId        String
+  billingKey    String?
+  price         Int
+  status        SubscriptionStatus @default(ACTIVE)
+  nextBillingAt DateTime
+  lastBilledAt  DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  tool     Tool      @relation(fields: [toolId], references: [id])
+  payments Payment[]
+}
+
+model Payment {
+  id             String      @id @default(uuid())
+  userId         String
+  toolId         String
+  subscriptionId String?
+  paymentType    PaymentType
+  amountTotal    Int
+  platformFee    Int
+  creatorAmount  Int
+  pgFee          Int         @default(0)
+  tossPaymentKey String?
+  tossOrderId    String?
+  paidAt         DateTime    @default(now())
+
+  user         User          @relation(fields: [userId], references: [id])
+  tool         Tool          @relation(fields: [toolId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+}
+
+model UserToolOwnership {
+  id          String   @id @default(uuid())
+  userId      String
+  toolId      String
+  purchasedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  tool Tool @relation(fields: [toolId], references: [id])
+
+  @@unique([userId, toolId])
+}
