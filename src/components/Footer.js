@@ -33,7 +33,7 @@ export default function Footer() {
           <div>
             <h4 className="text-xs font-semibold text-tx-1 mb-3">정보</h4>
             <div className="space-y-2">
-              <span className="block text-xs text-tx-3">문의: hello@crypee.com</span>
+              <span className="block text-xs text-tx-3">문의: contact@crypee.io</span>
               <span className="block text-xs text-tx-3">🚧 현재 베타 서비스 운영 중</span>
             </div>
           </div>
@@ -41,8 +41,8 @@ export default function Footer() {
         <div className="border-t border-bg-3 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <span className="text-[11px] text-tx-3">© 2025 crypee. All rights reserved.</span>
           <div className="flex gap-4">
-            <span className="text-[11px] text-tx-3 hover:text-tx-1 cursor-pointer">이용약관</span>
-            <span className="text-[11px] text-tx-3 hover:text-tx-1 cursor-pointer">개인정보처리방침</span>
+            <Link href="/terms" className="text-[11px] text-tx-3 hover:text-tx-1">이용약관</Link>
+            <Link href="/privacy" className="text-[11px] text-tx-3 hover:text-tx-1">개인정보처리방침</Link>
           </div>
         </div>
       </div>
