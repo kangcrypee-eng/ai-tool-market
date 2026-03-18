@@ -46,8 +46,23 @@ export default function HomePage() {
   }, [mode, toolCat, postCat, search]);
 
   const handleLike = async (postId) => {
-    await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
-    loadPosts();
+    if (!user) { alert('로그인이 필요합니다'); return; }
+    // Optimistic update
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const wasLiked = p.likes?.length > 0;
+      return {
+        ...p,
+        likes: wasLiked ? [] : [{ id: 'temp' }],
+        _count: { ...p._count, likes: (p._count?.likes || 0) + (wasLiked ? -1 : 1) },
+      };
+    }));
+    try {
+      const r = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+      if (!r.ok) throw new Error('좋아요 실패');
+    } catch (e) {
+      loadPosts(); // Revert on error
+    }
   };
 
   const submitPost = async (e) => {

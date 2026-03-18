@@ -18,11 +18,56 @@ function getTrialDaysLeft(tool) {
 }
 const fmt = (p) => (!p || p === 0) ? 'Free' : `₩${p.toLocaleString()}`;
 
+function getTimeAgo(date) {
+  const s = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+
 export default function PostCard({ post, onLike }) {
   const { user } = useAuth();
   const style = typeStyles[post.type] || typeStyles.TIP;
   const liked = post.likes?.length > 0;
   const timeAgo = getTimeAgo(post.createdAt);
+
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [posting, setPosting] = useState(false);
+
+  const toggleComments = async () => {
+    if (!showComments) {
+      setLoadingComments(true);
+      try {
+        const r = await fetch(`/api/posts/${post.id}/comments`);
+        const d = await r.json();
+        setComments(d.comments || []);
+      } catch {}
+      finally { setLoadingComments(false); }
+    }
+    setShowComments(!showComments);
+  };
+
+  const submitComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    setPosting(true);
+    try {
+      const r = await fetch(`/api/posts/${post.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: commentText }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setComments([d.comment, ...comments]);
+      setCommentText('');
+    } catch (e) { alert(e.message); }
+    finally { setPosting(false); }
+  };
 
   return (
     <div className="bg-bg-1 border border-bg-3 rounded-xl p-4 hover:border-bg-4 transition-colors">
@@ -69,19 +114,70 @@ export default function PostCard({ post, onLike }) {
 
       {/* Actions */}
       <div className="flex gap-4 pt-2 border-t border-bg-2">
-        <button onClick={() => onLike?.(post.id)} className={`text-[11px] flex items-center gap-1 transition-colors ${liked ? 'text-red-400' : 'text-tx-3 hover:text-tx-1'}`}>
+        <button
+          onClick={() => onLike?.(post.id)}
+          className={`text-[11px] flex items-center gap-1 transition-colors ${liked ? 'text-red-400' : 'text-tx-3 hover:text-tx-1'}`}
+        >
           {liked ? '♥' : '♡'} {post._count?.likes || 0}
         </button>
-        <span className="text-[11px] text-tx-3 flex items-center gap-1">💬 {post._count?.comments || 0}</span>
+        <button
+          onClick={toggleComments}
+          className={`text-[11px] flex items-center gap-1 transition-colors ${showComments ? 'text-acc' : 'text-tx-3 hover:text-tx-1'}`}
+        >
+          💬 {post._count?.comments || 0}
+        </button>
       </div>
+
+      {/* Comments section */}
+      {showComments && (
+        <div className="mt-3 pt-3 border-t border-bg-2">
+          {/* Comment input */}
+          {user ? (
+            <form onSubmit={submitComment} className="flex gap-2 mb-3">
+              <input
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                className="flex-1 text-xs"
+                placeholder="댓글을 작성하세요..."
+                required
+              />
+              <button
+                type="submit"
+                disabled={posting}
+                className="px-3 py-1.5 rounded-md bg-acc text-bg-0 text-[11px] font-semibold hover:brightness-110 disabled:opacity-50 flex-shrink-0"
+              >
+                {posting ? '...' : '등록'}
+              </button>
+            </form>
+          ) : (
+            <p className="text-[11px] text-tx-3 mb-3">
+              댓글을 작성하려면 <a href="/login" className="text-acc hover:underline">로그인</a>이 필요합니다
+            </p>
+          )}
+
+          {/* Comment list */}
+          {loadingComments ? (
+            <div className="text-[11px] text-tx-3 py-2">댓글 불러오는 중...</div>
+          ) : comments.length === 0 ? (
+            <div className="text-[11px] text-tx-3 py-2">아직 댓글이 없습니다</div>
+          ) : (
+            <div className="space-y-2">
+              {comments.map(c => (
+                <div key={c.id} className="flex gap-2">
+                  <div className="w-6 h-6 rounded-md bg-bg-3 flex items-center justify-center text-[9px] font-bold text-tx-2 flex-shrink-0">{c.user?.name?.[0]}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-semibold text-tx-0">{c.user?.name}</span>
+                      <span className="text-[10px] text-tx-3">{getTimeAgo(c.createdAt)}</span>
+                    </div>
+                    <p className="text-[11px] text-tx-2 mt-0.5">{c.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
-}
-
-function getTimeAgo(date) {
-  const s = Math.floor((Date.now() - new Date(date)) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
 }
