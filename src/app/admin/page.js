@@ -109,11 +109,11 @@ export default function AdminPage() {
 
       {/* Tools management */}
       {tab === 'tools' && (
-        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-hidden">
+        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-x-auto">
           {data?.tools?.length === 0 ? (
             <div className="text-center py-12 text-tx-3 text-xs">No tools</div>
           ) : (
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[500px]">
               <thead><tr className="bg-bg-2 text-tx-3 text-[10px]">
                 <th className="text-left px-4 py-2.5">Tool</th>
                 <th className="text-left px-4 py-2.5">Creator</th>
@@ -153,7 +153,7 @@ export default function AdminPage() {
 
       {/* Posts management */}
       {tab === 'posts' && (
-        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-hidden">
+        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-x-auto">
           {data?.posts?.length === 0 ? (
             <div className="text-center py-12 text-tx-3 text-xs">No posts</div>
           ) : (
@@ -194,8 +194,8 @@ export default function AdminPage() {
 
       {/* Users */}
       {tab === 'users' && (
-        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-hidden">
-          <table className="w-full text-xs">
+        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-x-auto">
+          <table className="w-full text-xs min-w-[500px]">
             <thead><tr className="bg-bg-2 text-tx-3 text-[10px]"><th className="text-left px-4 py-2.5">Name</th><th className="text-left px-4 py-2.5">Email</th><th className="text-left px-4 py-2.5">Role</th><th className="text-left px-4 py-2.5">Joined</th></tr></thead>
             <tbody>{data?.users?.map(u => (
               <tr key={u.id} className="border-t border-bg-2 hover:bg-bg-2">
@@ -211,11 +211,11 @@ export default function AdminPage() {
 
       {/* Payments */}
       {tab === 'payments' && (
-        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-hidden">
+        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-x-auto">
           {data?.payments?.length === 0 ? (
             <div className="text-center py-12 text-tx-3 text-xs">No payments</div>
           ) : (
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[500px]">
               <thead><tr className="bg-bg-2 text-tx-3 text-[10px]"><th className="text-left px-4 py-2.5">Date</th><th className="text-left px-4 py-2.5">User</th><th className="text-left px-4 py-2.5">Tool</th><th className="text-right px-4 py-2.5">Amount</th><th className="text-right px-4 py-2.5">Fee</th><th className="text-right px-4 py-2.5">Payout</th></tr></thead>
               <tbody>{data?.payments?.map(p => (
                 <tr key={p.id} className="border-t border-bg-2 hover:bg-bg-2">

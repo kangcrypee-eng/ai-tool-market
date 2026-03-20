@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const typeStyles = {
   TOOL_SHARE: { label: 'Tool', cls: 'bg-acc/10 text-acc' },
@@ -26,7 +26,7 @@ function getTimeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-export default function PostCard({ post, onLike }) {
+export default function PostCard({ post, onLike, onDelete }) {
   const { user } = useAuth();
   const style = typeStyles[post.type] || typeStyles.TIP;
   const liked = post.likes?.length > 0;
@@ -37,6 +37,18 @@ export default function PostCard({ post, onLike }) {
   const [commentText, setCommentText] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  const canDelete = user && (post.authorId === user.id || post.author?.id === user.id || user.role === 'ADMIN');
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const toggleComments = async () => {
     if (!showComments) {
@@ -69,21 +81,50 @@ export default function PostCard({ post, onLike }) {
     finally { setPosting(false); }
   };
 
+  const handleDeletePost = async () => {
+    if (!confirm('게시글을 삭제하시겠습니까?')) return;
+    setMenuOpen(false);
+    try {
+      const r = await fetch(`/api/posts/${post.id}`, { method: 'DELETE' });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
+      onDelete?.(post.id);
+    } catch (e) { alert(e.message); }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm('댓글을 삭제하시겠습니까?')) return;
+    try {
+      const r = await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
+      setComments(comments.filter(c => c.id !== commentId));
+    } catch (e) { alert(e.message); }
+  };
+
   return (
-    <div className="bg-bg-1 border border-bg-3 rounded-xl p-4 hover:border-bg-4 transition-colors">
+    <div className="bg-bg-1 border border-bg-3 rounded-xl p-3 sm:p-4 hover:border-bg-4 transition-colors">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-bg-3 flex items-center justify-center text-xs font-bold text-tx-1">{post.author?.name?.[0]}</div>
+      <div className="flex items-center gap-2 sm:gap-3 mb-3">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-bg-3 flex items-center justify-center text-xs font-bold text-tx-1">{post.author?.name?.[0]}</div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-tx-0">{post.author?.name}</div>
+          <div className="text-[11px] sm:text-xs font-semibold text-tx-0">{post.author?.name}</div>
           <div className="text-[10px] text-tx-3">{timeAgo}</div>
         </div>
         <span className={`text-[9px] px-2 py-0.5 rounded font-semibold ${style.cls}`}>{style.label}</span>
+        {canDelete && (
+          <div className="relative" ref={menuRef}>
+            <button onClick={() => setMenuOpen(!menuOpen)} className="text-tx-3 hover:text-tx-1 px-1 py-0.5 rounded hover:bg-bg-3 text-sm leading-none">⋯</button>
+            {menuOpen && (
+              <div className="absolute right-0 mt-1 w-28 bg-bg-1 rounded-lg border border-bg-3 py-1 text-xs z-50">
+                <button onClick={handleDeletePost} className="w-full text-left px-3 py-2 text-red-400 hover:bg-bg-2">삭제</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <h3 className="text-sm font-semibold mb-1">{post.title}</h3>
-      <p className="text-xs text-tx-2 leading-relaxed mb-3">{post.body}</p>
+      <p className="text-[11px] sm:text-xs text-tx-2 leading-relaxed mb-3">{post.body}</p>
 
       {/* Embedded tool card */}
       {post.tool && (
@@ -162,18 +203,29 @@ export default function PostCard({ post, onLike }) {
             <div className="text-[11px] text-tx-3 py-2">아직 댓글이 없습니다</div>
           ) : (
             <div className="space-y-2">
-              {comments.map(c => (
-                <div key={c.id} className="flex gap-2">
-                  <div className="w-6 h-6 rounded-md bg-bg-3 flex items-center justify-center text-[9px] font-bold text-tx-2 flex-shrink-0">{c.user?.name?.[0]}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold text-tx-0">{c.user?.name}</span>
-                      <span className="text-[10px] text-tx-3">{getTimeAgo(c.createdAt)}</span>
+              {comments.map(c => {
+                const canDeleteComment = user && (c.userId === user.id || c.user?.id === user.id || user.role === 'ADMIN');
+                return (
+                  <div key={c.id} className="group flex gap-2">
+                    <div className="w-6 h-6 rounded-md bg-bg-3 flex items-center justify-center text-[9px] font-bold text-tx-2 flex-shrink-0">{c.user?.name?.[0]}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-tx-0">{c.user?.name}</span>
+                        <span className="text-[10px] text-tx-3">{getTimeAgo(c.createdAt)}</span>
+                        {canDeleteComment && (
+                          <button
+                            onClick={() => handleDeleteComment(c.id)}
+                            className="text-[10px] text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
+                          >
+                            삭제
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-tx-2 mt-0.5">{c.content}</p>
                     </div>
-                    <p className="text-[11px] text-tx-2 mt-0.5">{c.content}</p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

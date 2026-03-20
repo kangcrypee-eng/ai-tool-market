@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getAuthFromRequest, requireAuth } from '@/lib/auth';
+import { sanitizeInput, LIMITS } from '@/lib/sanitize';
+
+const VALID_POST_TYPES = ['TOOL_SHARE', 'TIP', 'QUESTION', 'REVIEW'];
 
 export async function GET(req) {
   try {
@@ -43,13 +46,20 @@ export async function POST(req) {
     const { type, title, body, tags, toolId } = await req.json();
     if (!title || !body) return NextResponse.json({ error: '제목과 내용은 필수입니다.' }, { status: 400 });
 
+    const cleanTitle = sanitizeInput(title, LIMITS.postTitle);
+    const cleanBody = sanitizeInput(body, LIMITS.postBody);
+    const cleanType = VALID_POST_TYPES.includes(type) ? type : 'TIP';
+    const cleanTags = Array.isArray(tags)
+      ? tags.slice(0, LIMITS.maxTags).map(t => sanitizeInput(t, LIMITS.tag)).filter(Boolean)
+      : [];
+
     const post = await prisma.post.create({
       data: {
         authorId: user.id,
-        type: type || 'TIP',
-        title,
-        body,
-        tags: tags || [],
+        type: cleanType,
+        title: cleanTitle,
+        body: cleanBody,
+        tags: cleanTags,
         toolId: toolId || null,
       },
       include: { author: { select: { id: true, name: true } } },

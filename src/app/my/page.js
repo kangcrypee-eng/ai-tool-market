@@ -208,9 +208,9 @@ export default function MyPage() {
 
       {/* Payments */}
       {tab === 'payments' && (
-        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-hidden">
+        <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-x-auto">
           {data?.payments?.length === 0 ? <Empty icon="💳" text="No payment history" /> : (
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[400px]">
               <thead><tr className="bg-bg-2 text-tx-3 text-[10px]">
                 <th className="text-left px-4 py-2.5 font-semibold">Date</th>
                 <th className="text-left px-4 py-2.5 font-semibold">Tool</th>

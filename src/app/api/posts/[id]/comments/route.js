@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { sanitizeInput, LIMITS } from '@/lib/sanitize';
 
 export async function GET(req, { params }) {
   const { id } = params;
@@ -19,8 +20,9 @@ export async function POST(req, { params }) {
     const { content } = await req.json();
     if (!content) return NextResponse.json({ error: '내용 필수' }, { status: 400 });
 
+    const cleanContent = sanitizeInput(content, LIMITS.comment);
     const comment = await prisma.comment.create({
-      data: { userId: user.id, postId: id, content },
+      data: { userId: user.id, postId: id, content: cleanContent },
       include: { user: { select: { id: true, name: true } } },
     });
     return NextResponse.json({ comment }, { status: 201 });

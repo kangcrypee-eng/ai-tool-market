@@ -4,7 +4,7 @@
 
 @layer base {
   html { -webkit-font-smoothing: antialiased; }
-  body { background: #0e0e10; color: #f0f0f2; }
+  body { background: #0e0e10; color: #f0f0f2; overflow-x: hidden; }
   ::selection { background: rgba(86,156,214,0.3); }
   input, textarea, select {
     background: #1e1e22;
@@ -20,7 +20,19 @@
   input::placeholder, textarea::placeholder { color: #5a5a66; }
 }
 
+@media (max-width: 640px) {
+  input, textarea, select { font-size: 16px; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #26262c; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2e2e36; }
+
 @layer utilities {
   .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }

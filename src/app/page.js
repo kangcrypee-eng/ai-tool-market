@@ -206,7 +206,7 @@ export default function HomePage() {
               <p className="text-xs mt-1 text-tx-3">첫 번째 글을 작성해보세요!</p>
             </div>
           ) : (
-            <div className="space-y-3">{posts.map(p => <PostCard key={p.id} post={p} onLike={handleLike} />)}</div>
+            <div className="space-y-3">{posts.map(p => <PostCard key={p.id} post={p} onLike={handleLike} onDelete={(id) => setPosts(posts.filter(x => x.id !== id))} />)}</div>
           )}
         </div>
       )}

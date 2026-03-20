@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getAuthFromRequest, requireAuth } from '@/lib/auth';
+import { sanitizeInput, LIMITS } from '@/lib/sanitize';
 
 export async function GET(req) {
   try {
@@ -37,11 +38,11 @@ export async function POST(req) {
 
     const tool = await prisma.tool.create({
       data: {
-        name: b.name,
-        description: b.description,
-        longDescription: b.longDescription || '',
+        name: sanitizeInput(b.name, LIMITS.toolName),
+        description: sanitizeInput(b.description, LIMITS.toolDesc),
+        longDescription: sanitizeInput(b.longDescription, LIMITS.toolLongDesc) || '',
         imageUrl: b.imageUrl || null,
-        toolUrl: b.toolUrl || null,
+        toolUrl: sanitizeInput(b.toolUrl, LIMITS.toolUrl) || null,
         category: b.category || 'general',
         creatorId: user.id,
         isOneTimeEnabled: false,
