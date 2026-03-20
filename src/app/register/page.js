@@ -1,15 +1,17 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, user, loading } = useAuth();
   const router = useRouter();
   const [f, setF] = useState({ name: '', email: '', password: '', bio: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => { if (!loading && user) router.push('/'); }, [user, loading]);
 
   const submit = async (e) => {
     e.preventDefault(); setError(''); setBusy(true);
@@ -30,7 +32,7 @@ export default function RegisterPage() {
           <form onSubmit={submit} className="space-y-3">
             <div>
               <label className="block text-xs text-tx-2 mb-1">Name</label>
-              <input type="text" value={f.name} onChange={e => setF({...f, name: e.target.value})} className="w-full" placeholder="홍길동" required />
+              <input type="text" value={f.name} onChange={e => setF({...f, name: e.target.value})} className="w-full" placeholder="홍길동" maxLength={30} required />
             </div>
             <div>
               <label className="block text-xs text-tx-2 mb-1">Email</label>
@@ -42,7 +44,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <label className="block text-xs text-tx-2 mb-1">Bio (optional)</label>
-              <input type="text" value={f.bio} onChange={e => setF({...f, bio: e.target.value})} className="w-full" placeholder="AI automation enthusiast" />
+              <input type="text" value={f.bio} onChange={e => setF({...f, bio: e.target.value})} className="w-full" placeholder="AI automation enthusiast" maxLength={200} />
             </div>
             <button type="submit" disabled={busy}
               className="w-full py-2.5 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110 disabled:opacity-50 transition-all">

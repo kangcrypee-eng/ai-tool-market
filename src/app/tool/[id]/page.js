@@ -48,7 +48,7 @@ export default function ToolDetailPage() {
           <p className="text-xs text-tx-2 leading-relaxed mb-5">{tool.description}</p>
 
           {/* Tool access link */}
-          {tool.toolUrl && (
+          {tool.toolUrl && /^https?:\/\//i.test(tool.toolUrl) && (
             <a href={tool.toolUrl} target="_blank" rel="noopener noreferrer"
               className="w-full py-3 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110 text-center block mb-3">
               🔗 툴 사용하기 →
@@ -75,7 +75,7 @@ export default function ToolDetailPage() {
       )}
 
       {/* Tool URL section */}
-      {tool.toolUrl && (
+      {tool.toolUrl && /^https?:\/\//i.test(tool.toolUrl) && (
         <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6">
           <h2 className="text-sm font-semibold mb-2">툴 링크</h2>
           <a href={tool.toolUrl} target="_blank" rel="noopener noreferrer"

@@ -2,6 +2,9 @@ import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getAuthFromRequest, requireAuth } from '@/lib/auth';
 import { getTrialDaysLeft, isInFreeTrial } from '@/lib/payment';
+import { sanitizeInput, LIMITS } from '@/lib/sanitize';
+
+const VALID_CATEGORIES = ['general', 'automation', 'content', 'data', 'marketing', 'productivity'];
 
 export async function GET(req, { params }) {
   try {
@@ -53,15 +56,16 @@ export async function PUT(req, { params }) {
     const updated = await prisma.tool.update({
       where: { id },
       data: {
-        name: b.name ?? tool.name,
-        description: b.description ?? tool.description,
-        longDescription: b.longDescription ?? tool.longDescription,
+        name: b.name != null ? sanitizeInput(b.name, LIMITS.toolName) : tool.name,
+        description: b.description != null ? sanitizeInput(b.description, LIMITS.toolDesc) : tool.description,
+        longDescription: b.longDescription != null ? sanitizeInput(b.longDescription, LIMITS.toolLongDesc) : tool.longDescription,
         imageUrl: b.imageUrl ?? tool.imageUrl,
-        category: b.category ?? tool.category,
+        toolUrl: b.toolUrl != null ? (sanitizeInput(b.toolUrl, LIMITS.toolUrl) || null) : tool.toolUrl,
+        category: b.category && VALID_CATEGORIES.includes(b.category) ? b.category : tool.category,
         isOneTimeEnabled: b.isOneTimeEnabled ?? tool.isOneTimeEnabled,
-        oneTimePrice: b.oneTimePrice !== undefined ? parseInt(b.oneTimePrice) : tool.oneTimePrice,
+        oneTimePrice: b.oneTimePrice !== undefined ? parseInt(b.oneTimePrice, 10) : tool.oneTimePrice,
         isSubscriptionEnabled: b.isSubscriptionEnabled ?? tool.isSubscriptionEnabled,
-        subscriptionPrice: b.subscriptionPrice !== undefined ? parseInt(b.subscriptionPrice) : tool.subscriptionPrice,
+        subscriptionPrice: b.subscriptionPrice !== undefined ? parseInt(b.subscriptionPrice, 10) : tool.subscriptionPrice,
         ...(user.role === 'ADMIN' && b.status ? { status: b.status } : {}),
       },
     });

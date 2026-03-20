@@ -32,7 +32,7 @@ export default function MyPage() {
       const url = editId ? `/api/tools/${editId}` : '/api/tools';
       const r = await fetch(url, {
         method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, oneTimePrice: form.isOneTimeEnabled ? parseInt(form.oneTimePrice) || 0 : null, subscriptionPrice: form.isSubscriptionEnabled ? parseInt(form.subscriptionPrice) || 0 : null, freeTrialDays: parseInt(form.freeTrialDays) || 30 }),
+        body: JSON.stringify({ ...form, oneTimePrice: form.isOneTimeEnabled ? parseInt(form.oneTimePrice, 10) || 0 : null, subscriptionPrice: form.isSubscriptionEnabled ? parseInt(form.subscriptionPrice, 10) || 0 : null, freeTrialDays: parseInt(form.freeTrialDays, 10) || 30 }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
@@ -51,8 +51,11 @@ export default function MyPage() {
 
   const cancelSub = async (id) => {
     if (!confirm('구독을 해지하시겠습니까?')) return;
-    await fetch(`/api/subscriptions/${id}/cancel`, { method: 'POST' });
-    load();
+    try {
+      const r = await fetch(`/api/subscriptions/${id}/cancel`, { method: 'POST' });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error || '해지 실패'); }
+      load();
+    } catch (e) { alert(e.message); }
   };
 
   if (authLoad || loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-20 bg-bg-2 rounded-xl" /><div className="h-40 bg-bg-2 rounded-xl" /></div></div>;

@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { getAuthFromRequest, requireAuth } from '@/lib/auth';
 import { sanitizeInput, LIMITS } from '@/lib/sanitize';
 
+const VALID_CATEGORIES = ['general', 'automation', 'content', 'data', 'marketing', 'productivity'];
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -43,13 +45,13 @@ export async function POST(req) {
         longDescription: sanitizeInput(b.longDescription, LIMITS.toolLongDesc) || '',
         imageUrl: b.imageUrl || null,
         toolUrl: sanitizeInput(b.toolUrl, LIMITS.toolUrl) || null,
-        category: b.category || 'general',
+        category: VALID_CATEGORIES.includes(b.category) ? b.category : 'general',
         creatorId: user.id,
         isOneTimeEnabled: false,
         oneTimePrice: null,
         isSubscriptionEnabled: false,
         subscriptionPrice: null,
-        freeTrialDays: parseInt(b.freeTrialDays) || 30,
+        freeTrialDays: parseInt(b.freeTrialDays, 10) || 30,
         status: user.role === 'ADMIN' ? 'APPROVED' : 'PENDING',
       },
     });

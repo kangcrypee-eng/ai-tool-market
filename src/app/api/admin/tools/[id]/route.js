@@ -22,15 +22,17 @@ export async function DELETE(req, { params }) {
     requireAdmin(req);
     const { id } = params;
 
-    // 관련 데이터 순서대로 삭제
-    await prisma.postLike.deleteMany({ where: { post: { toolId: id } } });
-    await prisma.comment.deleteMany({ where: { toolId: id } });
-    await prisma.comment.deleteMany({ where: { post: { toolId: id } } });
-    await prisma.post.deleteMany({ where: { toolId: id } });
-    await prisma.payment.deleteMany({ where: { toolId: id } });
-    await prisma.userToolOwnership.deleteMany({ where: { toolId: id } });
-    await prisma.subscription.deleteMany({ where: { toolId: id } });
-    await prisma.tool.delete({ where: { id } });
+    // 트랜잭션으로 관련 데이터 순차 삭제 (FK 의존성)
+    await prisma.$transaction(async (tx) => {
+      await tx.postLike.deleteMany({ where: { post: { toolId: id } } });
+      await tx.comment.deleteMany({ where: { toolId: id } });
+      await tx.comment.deleteMany({ where: { post: { toolId: id } } });
+      await tx.post.deleteMany({ where: { toolId: id } });
+      await tx.payment.deleteMany({ where: { toolId: id } });
+      await tx.userToolOwnership.deleteMany({ where: { toolId: id } });
+      await tx.subscription.deleteMany({ where: { toolId: id } });
+      await tx.tool.delete({ where: { id } });
+    });
 
     return NextResponse.json({ ok: true });
   } catch (e) {

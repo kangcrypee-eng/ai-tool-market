@@ -1,11 +1,16 @@
 import { prisma } from '@/lib/prisma';
 import { comparePassword, signToken } from '@/lib/auth';
+import { validateEmail, validatePassword } from '@/lib/sanitize';
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
   try {
     const { email, password } = await req.json();
-    const user = await prisma.user.findUnique({ where: { email } });
+    if (!email || !password) return NextResponse.json({ error: '이메일과 비밀번호를 입력해주세요.' }, { status: 400 });
+    const cleanEmail = email.toLowerCase().trim();
+    if (!validateEmail(cleanEmail)) return NextResponse.json({ error: '올바른 이메일 형식이 아닙니다.' }, { status: 400 });
+    if (!validatePassword(password)) return NextResponse.json({ error: '비밀번호는 6자 이상 100자 이하여야 합니다.' }, { status: 400 });
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
     if (!user || !comparePassword(password, user.password))
       return NextResponse.json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' }, { status: 401 });
 

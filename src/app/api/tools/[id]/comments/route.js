@@ -11,8 +11,10 @@ export async function POST(req, { params }) {
     if (!content) return NextResponse.json({ error: '내용 필수' }, { status: 400 });
 
     const cleanContent = sanitizeInput(content, LIMITS.comment);
+    const parsedRating = rating ? parseInt(rating, 10) : null;
+    const validRating = parsedRating && parsedRating >= 1 && parsedRating <= 5 ? parsedRating : null;
     const comment = await prisma.comment.create({
-      data: { userId: user.id, toolId: id, content: cleanContent, rating: rating ? parseInt(rating) : null },
+      data: { userId: user.id, toolId: id, content: cleanContent, rating: validRating },
       include: { user: { select: { id: true, name: true } } },
     });
     return NextResponse.json({ comment }, { status: 201 });
