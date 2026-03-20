@@ -24,7 +24,7 @@ export default function HomePage() {
 
   // Tool upload
   const [showToolForm, setShowToolForm] = useState(false);
-  const [toolForm, setToolForm] = useState({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '' });
+  const [toolForm, setToolForm] = useState({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
   const [postingTool, setPostingTool] = useState(false);
 
   const loadPosts = () => {
@@ -91,11 +91,11 @@ export default function HomePage() {
     try {
       const r = await fetch('/api/tools', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(toolForm),
+        body: JSON.stringify({ ...toolForm, oneTimePrice: toolForm.isOneTimeEnabled ? parseInt(toolForm.oneTimePrice, 10) || 0 : null, subscriptionPrice: toolForm.isSubscriptionEnabled ? parseInt(toolForm.subscriptionPrice, 10) || 0 : null, freeTrialDays: parseInt(toolForm.freeTrialDays, 10) || 30 }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
-      setToolForm({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '' });
+      setToolForm({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
       setShowToolForm(false);
       alert('툴이 등록되었습니다! 관리자 승인 후 마켓에 공개됩니다.');
       loadTools();
@@ -118,7 +118,7 @@ export default function HomePage() {
       {/* Notice banner */}
       <div className="bg-gradient-to-r from-acc-2/[0.06] to-acc/[0.06] border border-acc-2/15 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full bg-acc-5 flex-shrink-0 animate-pulse" />
-        <span className="text-xs text-tx-1">🚧 crypee는 현재 베타 서비스입니다 · 결제 기능 준비 중이며, 모든 툴은 무료로 이용 가능합니다</span>
+        <span className="text-xs text-tx-1">⚡ 모든 신규 툴은 등록 후 30일간 무료 체험 가능합니다</span>
       </div>
 
       {/* Search */}
@@ -236,12 +236,33 @@ export default function HomePage() {
                   <div><label className="block text-xs text-tx-2 mb-1">짧은 설명 *</label><input value={toolForm.description} onChange={e => setToolForm({...toolForm, description: e.target.value})} className="w-full" placeholder="이 툴이 어떤 일을 하는지 한 줄로 설명해주세요" required /></div>
                   <div><label className="block text-xs text-tx-2 mb-1">상세 설명</label><textarea value={toolForm.longDescription} onChange={e => setToolForm({...toolForm, longDescription: e.target.value})} className="w-full h-20 resize-none" placeholder="기능, 사용법, 특징 등을 자세히 설명해주세요" /></div>
                   <div>
-                    <label className="block text-xs text-tx-2 mb-1">툴 링크 (노션, 구글독스, 웹앱 URL 등)</label>
+                    <label className="block text-xs text-tx-2 mb-1">툴 링크 (선택)</label>
                     <input value={toolForm.toolUrl} onChange={e => setToolForm({...toolForm, toolUrl: e.target.value})} className="w-full" placeholder="https://notion.so/my-tool 또는 https://my-app.com" />
-                    <p className="text-[10px] text-tx-3 mt-1">실제 툴을 사용할 수 있는 링크를 입력하세요. 노션 페이지, 구글 시트, 웹앱 URL 등 어떤 형태든 가능합니다.</p>
+                    <p className="text-[10px] text-tx-3 mt-1">노션, 구글 시트, 웹앱 URL 등. 파일은 등록 후 My 페이지에서 업로드할 수 있습니다.</p>
                   </div>
-                  <div className="bg-bg-2 border border-bg-3 rounded-lg p-3 text-xs text-tx-3">
-                    💡 현재 모든 툴은 무료로 공개됩니다. 결제 기능은 추후 업데이트될 예정입니다.
+                  <div>
+                    <label className="block text-xs text-tx-2 mb-1">무료 체험 기간 (일)</label>
+                    <input type="number" value={toolForm.freeTrialDays} onChange={e => setToolForm({...toolForm, freeTrialDays: e.target.value})} className="w-full" min="0" placeholder="30" />
+                  </div>
+                  <div className="border-t border-bg-3 pt-3">
+                    <div className="text-xs font-semibold text-tx-2 mb-2">결제 설정 (무료 체험 종료 후 적용)</div>
+                    <div className="space-y-2">
+                      <label className="flex items-start gap-3 p-3 rounded-lg border border-bg-3 hover:border-bg-4 cursor-pointer">
+                        <input type="checkbox" checked={toolForm.isOneTimeEnabled} onChange={e => setToolForm({...toolForm, isOneTimeEnabled: e.target.checked})} className="mt-0.5 accent-acc" />
+                        <div className="flex-1">
+                          <div className="text-xs font-medium">1회 구매</div>
+                          {toolForm.isOneTimeEnabled && <input type="number" value={toolForm.oneTimePrice} onChange={e => setToolForm({...toolForm, oneTimePrice: e.target.value})} className="mt-2 w-full" placeholder="가격 (₩)" min="0" />}
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 p-3 rounded-lg border border-bg-3 hover:border-bg-4 cursor-pointer">
+                        <input type="checkbox" checked={toolForm.isSubscriptionEnabled} onChange={e => setToolForm({...toolForm, isSubscriptionEnabled: e.target.checked})} className="mt-0.5 accent-acc" />
+                        <div className="flex-1">
+                          <div className="text-xs font-medium">월 구독</div>
+                          {toolForm.isSubscriptionEnabled && <input type="number" value={toolForm.subscriptionPrice} onChange={e => setToolForm({...toolForm, subscriptionPrice: e.target.value})} className="mt-2 w-full" placeholder="월 가격 (₩)" min="0" />}
+                        </div>
+                      </label>
+                    </div>
+                    <p className="text-[10px] text-tx-3 mt-2">💡 30일 무료 체험 후 설정한 가격으로 유료 전환됩니다</p>
                   </div>
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setShowToolForm(false)} className="px-4 py-2 rounded-lg text-xs text-tx-3 hover:text-tx-1 hover:bg-bg-2">취소</button>

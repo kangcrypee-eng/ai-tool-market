@@ -13,6 +13,7 @@ export async function GET(req, { params }) {
       where: { id },
       include: {
         creator: { select: { id: true, name: true, bio: true } },
+        files: { orderBy: { createdAt: 'desc' } },
         comments: { where: { postId: null }, include: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: 'desc' }, take: 20 },
         _count: { select: { subscriptions: { where: { status: 'ACTIVE' } }, payments: true } },
       },
@@ -28,15 +29,26 @@ export async function GET(req, { params }) {
 
     const freeTrial = isInFreeTrial(tool);
     const trialDaysLeft = getTrialDaysLeft(tool);
+    const hasAccess = !!ownership || !!subscription || freeTrial;
+    const isCreator = user && tool.creatorId === user.id;
+    const isAdmin = user && user.role === 'ADMIN';
+
+    // Access control: hide toolUrl and files when locked
+    const responseTool = { ...tool };
+    if (!hasAccess && !isCreator && !isAdmin) {
+      responseTool.toolUrl = null;
+      responseTool.files = [];
+    }
 
     return NextResponse.json({
-      tool,
+      tool: responseTool,
       freeTrial,
       trialDaysLeft,
+      isLocked: !hasAccess && !isCreator && !isAdmin,
       userAccess: {
         owned: !!ownership,
         subscribed: !!subscription,
-        hasAccess: !!ownership || !!subscription || freeTrial,
+        hasAccess: hasAccess || !!isCreator || !!isAdmin,
       },
     });
   } catch (e) {

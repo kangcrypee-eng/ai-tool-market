@@ -15,7 +15,7 @@ export default function MyPage() {
   const [tab, setTab] = useState('tools');
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+  const [form, setForm] = useState({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', toolUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function MyPage() {
       const url = editId ? `/api/tools/${editId}` : '/api/tools';
       const r = await fetch(url, {
         method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, oneTimePrice: form.isOneTimeEnabled ? parseInt(form.oneTimePrice, 10) || 0 : null, subscriptionPrice: form.isSubscriptionEnabled ? parseInt(form.subscriptionPrice, 10) || 0 : null, freeTrialDays: parseInt(form.freeTrialDays, 10) || 30 }),
+        body: JSON.stringify({ ...form, toolUrl: form.toolUrl || null, oneTimePrice: form.isOneTimeEnabled ? parseInt(form.oneTimePrice, 10) || 0 : null, subscriptionPrice: form.isSubscriptionEnabled ? parseInt(form.subscriptionPrice, 10) || 0 : null, freeTrialDays: parseInt(form.freeTrialDays, 10) || 30 }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
@@ -41,11 +41,11 @@ export default function MyPage() {
     finally { setBusy(false); }
   };
 
-  const resetForm = () => setForm({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+  const resetForm = () => setForm({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', toolUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
 
   const editTool = (t) => {
     setEditId(t.id);
-    setForm({ name: t.name, description: t.description, longDescription: t.longDescription || '', category: t.category, imageUrl: t.imageUrl || '', isOneTimeEnabled: t.isOneTimeEnabled, oneTimePrice: t.oneTimePrice?.toString() || '', isSubscriptionEnabled: t.isSubscriptionEnabled, subscriptionPrice: t.subscriptionPrice?.toString() || '', freeTrialDays: t.freeTrialDays?.toString() || '30' });
+    setForm({ name: t.name, description: t.description, longDescription: t.longDescription || '', category: t.category, imageUrl: t.imageUrl || '', toolUrl: t.toolUrl || '', isOneTimeEnabled: t.isOneTimeEnabled, oneTimePrice: t.oneTimePrice?.toString() || '', isSubscriptionEnabled: t.isSubscriptionEnabled, subscriptionPrice: t.subscriptionPrice?.toString() || '', freeTrialDays: t.freeTrialDays?.toString() || '30' });
     setShowForm(true); setTab('tools');
   };
 
@@ -108,6 +108,7 @@ export default function MyPage() {
             </div>
             <div><label className="block text-xs text-tx-2 mb-1">Short description *</label><input value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="w-full" required /></div>
             <div><label className="block text-xs text-tx-2 mb-1">Long description</label><textarea value={form.longDescription} onChange={e => setForm({...form, longDescription: e.target.value})} className="w-full h-20" /></div>
+            <div><label className="block text-xs text-tx-2 mb-1">Tool URL (선택)</label><input value={form.toolUrl || ''} onChange={e => setForm({...form, toolUrl: e.target.value})} className="w-full" placeholder="https://notion.so/my-tool" /><p className="text-[10px] text-tx-3 mt-1">파일 업로드는 등록 후 툴 상세 페이지에서 가능합니다.</p></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-xs text-tx-2 mb-1">Image URL</label><input value={form.imageUrl} onChange={e => setForm({...form, imageUrl: e.target.value})} className="w-full" placeholder="https://..." /></div>
               <div><label className="block text-xs text-tx-2 mb-1">Free trial days</label><input type="number" value={form.freeTrialDays} onChange={e => setForm({...form, freeTrialDays: e.target.value})} className="w-full" min="0" /></div>

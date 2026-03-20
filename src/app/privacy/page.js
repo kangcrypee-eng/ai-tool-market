@@ -35,7 +35,7 @@ export default function PrivacyPage() {
                 <p>접속 IP, 브라우저 정보, 접속 일시, 서비스 이용 기록</p>
               </div>
               <div>
-                <p className="text-tx-1 font-semibold mb-1">결제 시 수집 (추후 적용)</p>
+                <p className="text-tx-1 font-semibold mb-1">결제 시 수집</p>
                 <p>결제 기록, 결제 수단 정보 (토스페이먼츠를 통해 처리되며 플랫폼은 카드번호를 직접 저장하지 않습니다)</p>
               </div>
             </div>

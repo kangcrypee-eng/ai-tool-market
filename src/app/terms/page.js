@@ -83,7 +83,15 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold text-tx-0 mb-3">제11조 (준거법 및 관할)</h2>
+          <h2 className="text-sm font-semibold text-tx-0 mb-3">제12조 (환불)</h2>
+          <p>① 1회 구매 후 7일 이내, 툴을 사용하지 않은 경우 전액 환불 가능합니다.</p>
+          <p className="mt-2">② 월 구독은 구독 해지 시 이미 결제된 기간까지 이용 가능하며, 남은 기간에 대한 환불은 원칙적으로 불가합니다.</p>
+          <p className="mt-2">③ 환불 요청은 contact@crypee.io로 접수할 수 있습니다.</p>
+          <p className="mt-2">④ 툴의 하자가 있는 경우 결제일로부터 30일 이내 환불 요청이 가능합니다.</p>
+        </section>
+
+        <section>
+          <h2 className="text-sm font-semibold text-tx-0 mb-3">제13조 (준거법 및 관할)</h2>
           <p>본 약관은 대한민국 법률에 따라 해석되며, 서비스 이용과 관련한 분쟁은 서울중앙지방법원을 관할법원으로 합니다.</p>
         </section>
 

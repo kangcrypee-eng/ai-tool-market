@@ -20,7 +20,11 @@ export default function ToolCard({ tool }) {
         <div className={`h-20 bg-gradient-to-br ${bgs[tool.category] || bgs.general} flex items-center justify-center text-2xl relative`}>
           {emojis[tool.category] || '🤖'}
           <span className="absolute top-1.5 left-1.5 text-[9px] px-1.5 py-0.5 rounded bg-white/[0.08] text-tx-2">{tool.category}</span>
-          {days > 0 && <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-acc-2/15 text-acc-2 font-semibold">{days}d free</span>}
+          {days > 0 ? (
+            <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-acc-2/15 text-acc-2 font-semibold">{days}d free</span>
+          ) : (tool.isOneTimeEnabled || tool.isSubscriptionEnabled) ? (
+            <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 font-semibold">🔒 유료</span>
+          ) : null}
         </div>
         <div className="p-3">
           <h3 className="text-xs font-semibold text-tx-0 mb-1 line-clamp-1 group-hover:text-acc transition-colors">{tool.name}</h3>

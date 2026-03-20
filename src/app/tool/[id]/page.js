@@ -3,6 +3,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import Script from 'next/script';
+
+const fmt = (p) => (!p || p === 0) ? 'Free' : `₩${p.toLocaleString()}`;
+const fmtSize = (bytes) => {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+};
 
 export default function ToolDetailPage() {
   const { id } = useParams();
@@ -12,8 +20,9 @@ export default function ToolDetailPage() {
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [rating, setRating] = useState(5);
+  const [paying, setPaying] = useState(false);
 
-  const load = () => fetch(`/api/tools/${id}`).then(r => r.json()).then(setData).finally(() => setLoading(false));
+  const load = () => fetch(`/api/tools/${id}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
   useEffect(() => { if (id) load(); }, [id]);
 
   const addComment = async (e) => {
@@ -26,45 +35,138 @@ export default function ToolDetailPage() {
     if (r.ok) { setComment(''); load(); }
   };
 
+  const handleOneTimePurchase = async () => {
+    if (!user) return router.push('/login');
+    setPaying(true);
+    try {
+      const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+      if (!tossClientKey || !window.TossPayments) throw new Error('결제 시스템을 로드할 수 없습니다.');
+      const tossPayments = window.TossPayments(tossClientKey);
+      const orderId = `order_${tool.id}_${user.id}_${Date.now()}`;
+      await tossPayments.requestPayment('카드', {
+        amount: tool.oneTimePrice,
+        orderId,
+        orderName: tool.name,
+        customerName: user.name,
+        successUrl: `${window.location.origin}/api/payments/toss-success`,
+        failUrl: `${window.location.origin}/api/payments/toss-fail`,
+      });
+    } catch (e) {
+      if (e.code !== 'USER_CANCEL') alert(e.message || '결제 중 오류가 발생했습니다.');
+    } finally { setPaying(false); }
+  };
+
+  const handleSubscribe = async () => {
+    if (!user) return router.push('/login');
+    setPaying(true);
+    try {
+      const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+      if (!tossClientKey || !window.TossPayments) throw new Error('결제 시스템을 로드할 수 없습니다.');
+      const tossPayments = window.TossPayments(tossClientKey);
+      await tossPayments.requestBillingKeyIssue('카드', {
+        customerKey: user.id,
+        successUrl: `${window.location.origin}/api/subscriptions/toss-success?toolId=${tool.id}`,
+        failUrl: `${window.location.origin}/api/subscriptions/toss-fail`,
+      });
+    } catch (e) {
+      if (e.code !== 'USER_CANCEL') alert(e.message || '구독 등록 중 오류가 발생했습니다.');
+    } finally { setPaying(false); }
+  };
+
   if (loading) return <div className="max-w-3xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-8 bg-bg-2 rounded w-1/3" /><div className="h-48 bg-bg-2 rounded-xl" /></div></div>;
   if (!data?.tool) return <div className="text-center py-20 text-tx-3">Tool not found</div>;
 
-  const { tool, freeTrial, trialDaysLeft, userAccess } = data;
+  const { tool, freeTrial, trialDaysLeft, userAccess, isLocked } = data;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
+      <Script src="https://js.tosspayments.com/v1/payment" strategy="lazyOnload" />
+
       <Link href="/" className="text-xs text-tx-2 hover:text-tx-0 mb-4 inline-flex items-center gap-1">← Back to list</Link>
 
       <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <div className="md:w-[45%] aspect-[16/10] rounded-xl bg-gradient-to-br from-bg-2 to-bg-3 flex items-center justify-center text-5xl border border-bg-3">🤖</div>
+        <div className="md:w-[45%] aspect-[16/10] rounded-xl bg-gradient-to-br from-bg-2 to-bg-3 flex items-center justify-center text-5xl border border-bg-3">
+          {isLocked ? '🔒' : '🤖'}
+        </div>
         <div className="flex-1">
           <div className="flex gap-2 flex-wrap mb-2">
             <span className="text-[10px] px-2 py-0.5 rounded bg-bg-3 text-tx-2">{tool.category}</span>
             {freeTrial && <span className="text-[10px] px-2 py-0.5 rounded bg-acc-2/10 text-acc-2">{trialDaysLeft}d free trial</span>}
-            {userAccess?.hasAccess && <span className="text-[10px] px-2 py-0.5 rounded bg-acc-2/10 text-acc-2">✓ Access</span>}
+            {userAccess?.owned && <span className="text-[10px] px-2 py-0.5 rounded bg-acc-2/10 text-acc-2">Owned</span>}
+            {userAccess?.subscribed && <span className="text-[10px] px-2 py-0.5 rounded bg-acc/10 text-acc">Subscribed</span>}
+            {isLocked && <span className="text-[10px] px-2 py-0.5 rounded bg-red-500/10 text-red-400">🔒 Locked</span>}
           </div>
           <h1 className="text-xl font-semibold mb-1">{tool.name}</h1>
           <p className="text-xs text-tx-3 mb-3">by {tool.creator?.name}</p>
           <p className="text-xs text-tx-2 leading-relaxed mb-5">{tool.description}</p>
 
-          {/* Tool access link */}
-          {tool.toolUrl && /^https?:\/\//i.test(tool.toolUrl) && (
+          {/* Access granted: show tool link */}
+          {userAccess?.hasAccess && tool.toolUrl && /^https?:\/\//i.test(tool.toolUrl) && (
             <a href={tool.toolUrl} target="_blank" rel="noopener noreferrer"
               className="w-full py-3 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110 text-center block mb-3">
               🔗 툴 사용하기 →
             </a>
           )}
 
-          {/* Status badges */}
-          {freeTrial ? (
-            <div className="w-full py-3 rounded-lg bg-acc-2/10 text-acc-2 text-center text-xs font-semibold">✓ 무료 체험 중 · {trialDaysLeft}일 남음</div>
-          ) : (
-            <div className="w-full py-3 rounded-lg bg-bg-2 border border-bg-3 text-tx-2 text-center text-xs">
-              💳 결제 기능 개발 중 · 현재 모든 툴은 무료로 이용 가능합니다
+          {/* Free trial badge */}
+          {freeTrial && (
+            <div className="w-full py-3 rounded-lg bg-acc-2/10 text-acc-2 text-center text-xs font-semibold mb-3">
+              ✓ 무료 체험 중 · {trialDaysLeft}일 남음
+            </div>
+          )}
+
+          {/* Locked: show purchase buttons */}
+          {isLocked && (
+            <div className="space-y-2">
+              <div className="w-full py-3 rounded-lg bg-bg-2 border border-bg-3 text-tx-2 text-center text-xs mb-2">
+                🔒 무료 체험 기간이 종료되었습니다
+              </div>
+              {tool.isOneTimeEnabled && (
+                <button onClick={handleOneTimePurchase} disabled={paying}
+                  className="w-full py-3 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110 disabled:opacity-50">
+                  {paying ? '처리 중...' : `1회 구매 — ${fmt(tool.oneTimePrice)}`}
+                </button>
+              )}
+              {tool.isSubscriptionEnabled && (
+                <button onClick={handleSubscribe} disabled={paying}
+                  className="w-full py-3 rounded-lg bg-acc-2 text-bg-0 text-xs font-semibold hover:brightness-110 disabled:opacity-50">
+                  {paying ? '처리 중...' : `월 구독 — ${fmt(tool.subscriptionPrice)}/mo`}
+                </button>
+              )}
+              {!tool.isOneTimeEnabled && !tool.isSubscriptionEnabled && (
+                <div className="text-[11px] text-tx-3 text-center">크리에이터가 아직 가격을 설정하지 않았습니다.</div>
+              )}
+            </div>
+          )}
+
+          {/* Not locked and not free trial - already purchased/subscribed */}
+          {!isLocked && !freeTrial && userAccess?.hasAccess && (
+            <div className="w-full py-3 rounded-lg bg-acc-2/10 text-acc-2 text-center text-xs font-semibold">
+              ✓ {userAccess.owned ? '구매 완료' : '구독 중'}
             </div>
           )}
         </div>
       </div>
+
+      {/* File downloads (only when access granted) */}
+      {userAccess?.hasAccess && tool.files?.length > 0 && (
+        <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6">
+          <h2 className="text-sm font-semibold mb-3">📁 파일 다운로드</h2>
+          <div className="space-y-2">
+            {tool.files.map(f => (
+              <a key={f.id} href={f.fileUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg bg-bg-2 border border-bg-3 hover:border-acc/30 transition-colors">
+                <span className="text-sm">📄</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium truncate">{f.fileName}</div>
+                  <div className="text-[10px] text-tx-3">{fmtSize(f.fileSize)} · {f.fileType}</div>
+                </div>
+                <span className="text-[10px] text-acc flex-shrink-0">다운로드 →</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Long description */}
       {tool.longDescription && (
@@ -74,18 +176,9 @@ export default function ToolDetailPage() {
         </div>
       )}
 
-      {/* Tool URL section */}
-      {tool.toolUrl && /^https?:\/\//i.test(tool.toolUrl) && (
-        <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6">
-          <h2 className="text-sm font-semibold mb-2">툴 링크</h2>
-          <a href={tool.toolUrl} target="_blank" rel="noopener noreferrer"
-            className="text-xs text-acc hover:underline break-all">{tool.toolUrl}</a>
-        </div>
-      )}
-
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        {[['Subscribers', tool._count?.subscriptions, 'text-acc'], ['Views', tool._count?.payments || 0, 'text-acc-2'], ['Reviews', tool.comments?.length, 'text-acc-3']].map(([l, n, c]) => (
+        {[['Subscribers', tool._count?.subscriptions, 'text-acc'], ['Payments', tool._count?.payments || 0, 'text-acc-2'], ['Reviews', tool.comments?.length, 'text-acc-3']].map(([l, n, c]) => (
           <div key={l} className="bg-bg-2 border border-bg-3 rounded-lg p-3 text-center">
             <div className={`text-lg font-semibold ${c}`}>{n || 0}</div>
             <div className="text-[10px] text-tx-3 mt-0.5">{l}</div>

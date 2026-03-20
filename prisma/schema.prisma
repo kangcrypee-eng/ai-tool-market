@@ -81,6 +81,19 @@ model Tool {
   ownerships    UserToolOwnership[]
   posts         Post[]
   comments      Comment[]
+  files         ToolFile[]
+}
+
+model ToolFile {
+  id        String   @id @default(uuid())
+  toolId    String
+  fileName  String
+  fileUrl   String
+  fileSize  Int
+  fileType  String
+  createdAt DateTime @default(now())
+
+  tool Tool @relation(fields: [toolId], references: [id], onDelete: Cascade)
 }
 
 model Post {
@@ -132,6 +145,7 @@ model Subscription {
   billingKey    String?
   price         Int
   status        SubscriptionStatus @default(ACTIVE)
+  retryCount    Int                @default(0)
   nextBillingAt DateTime
   lastBilledAt  DateTime?
   createdAt     DateTime           @default(now())
