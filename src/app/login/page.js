@@ -49,8 +49,9 @@ export default function LoginPage() {
             <div className="relative flex justify-center"><span className="px-2 bg-bg-1 text-[10px] text-tx-3">또는</span></div>
           </div>
           <a href="/api/auth/kakao"
-            className="w-full py-2.5 rounded-lg bg-[#FEE500] text-[#000000] text-xs font-semibold hover:brightness-95 transition-all flex items-center justify-center gap-2">
-            💬 카카오로 로그인
+            className="w-full py-2.5 rounded-lg bg-[#FEE500] text-[#191919] text-xs font-semibold hover:brightness-95 transition-all flex items-center justify-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M9 0.6C4.03 0.6 0 3.713 0 7.554c0 2.487 1.638 4.67 4.106 5.9-.134.497-.864 3.2-.895 3.403 0 0-.018.152.08.21.098.058.213.026.213.026.28-.04 3.254-2.14 3.768-2.5.236.034.477.051.728.051 4.97 0 9-3.113 9-6.954C18 3.713 13.97.6 9 .6" fill="#191919"/></svg>
+            카카오로 로그인
           </a>
           <p className="text-center text-xs text-tx-3 mt-5">
             계정이 없으신가요? <Link href="/register" className="text-acc hover:underline">Sign up</Link>
