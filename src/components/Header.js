@@ -9,16 +9,36 @@ export default function Header() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notiOpen, setNotiOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef(null);
+  const notiRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+      if (notiRef.current && !notiRef.current.contains(e.target)) setNotiOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Fetch notifications
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/notifications').then(r => r.json()).then(d => {
+      setNotifications(d.notifications || []);
+      setUnreadCount(d.unreadCount || 0);
+    }).catch(() => {});
+  }, [user, path]);
+
+  const markAllRead = async () => {
+    await fetch('/api/notifications', { method: 'PUT' });
+    setUnreadCount(0);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false); }, [path]);
@@ -53,6 +73,33 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Notification bell (desktop) */}
+          {user && (
+            <div className="relative hidden sm:block" ref={notiRef}>
+              <button onClick={() => setNotiOpen(!notiOpen)} className="relative p-1.5 rounded-md hover:bg-bg-3 transition-colors text-tx-2 hover:text-tx-0">
+                <span className="text-sm">🔔</span>
+                {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-[9px] text-white flex items-center justify-center font-bold">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+              </button>
+              {notiOpen && (
+                <div className="absolute right-0 mt-1 w-72 bg-bg-1 rounded-lg border border-bg-3 py-1 text-xs z-50 max-h-80 overflow-y-auto">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-bg-3">
+                    <span className="font-semibold text-tx-0">알림</span>
+                    {unreadCount > 0 && <button onClick={markAllRead} className="text-[10px] text-acc hover:underline">모두 읽음</button>}
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="px-3 py-6 text-center text-tx-3 text-[11px]">알림이 없습니다</div>
+                  ) : notifications.slice(0, 20).map(n => (
+                    <Link key={n.id} href={n.linkUrl || '#'} onClick={() => setNotiOpen(false)}
+                      className={`block px-3 py-2.5 hover:bg-bg-2 transition-colors ${!n.read ? 'bg-acc/[0.03]' : ''}`}>
+                      <p className="text-[11px] text-tx-1 leading-relaxed">{n.message}</p>
+                      <p className="text-[10px] text-tx-3 mt-0.5">{new Date(n.createdAt).toLocaleDateString('ko-KR')}</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Desktop user menu */}
           <div className="hidden sm:block">
             {loading ? <div className="w-16 h-7 bg-bg-3 rounded animate-pulse" /> : user ? (

@@ -1,6 +1,33 @@
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, getAuthFromRequest } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+
+export async function GET(req, { params }) {
+  try {
+    const { id } = params;
+    const user = getAuthFromRequest(req);
+
+    const include = {
+      author: { select: { id: true, name: true } },
+      tool: { select: { id: true, name: true, category: true } },
+      comments: {
+        include: { user: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'desc' },
+      },
+      _count: { select: { comments: true, likes: true } },
+    };
+    if (user) {
+      include.likes = { where: { userId: user.id }, select: { id: true } };
+    }
+
+    const post = await prisma.post.findUnique({ where: { id }, include });
+    if (!post) return NextResponse.json({ error: '게시글을 찾을 수 없습니다.' }, { status: 404 });
+
+    return NextResponse.json({ post });
+  } catch (e) {
+    return NextResponse.json({ error: '조회 실패' }, { status: 500 });
+  }
+}
 
 export async function DELETE(req, { params }) {
   try {
@@ -14,7 +41,6 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
     }
 
-    // FK 의존성 순서: postLikes → comments → post
     await prisma.postLike.deleteMany({ where: { postId: id } });
     await prisma.comment.deleteMany({ where: { postId: id } });
     await prisma.post.delete({ where: { id } });

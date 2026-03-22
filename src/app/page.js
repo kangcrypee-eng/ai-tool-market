@@ -16,10 +16,14 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [toolCat, setToolCat] = useState('all');
   const [postCat, setPostCat] = useState('all');
+  const [sortBy, setSortBy] = useState('latest');
+  const [visibleCount, setVisibleCount] = useState(20);
 
   // Composer
   const [showComposer, setShowComposer] = useState(false);
   const [postForm, setPostForm] = useState({ type: 'TIP', title: '', body: '', tags: '' });
+  const [postImages, setPostImages] = useState([]);
+  const [uploadingImg, setUploadingImg] = useState(false);
   const [posting, setPosting] = useState(false);
 
   // Tool upload
@@ -65,6 +69,27 @@ export default function HomePage() {
     }
   };
 
+  const sortedPosts = [...posts].sort((a, b) => {
+    if (sortBy === 'popular') return (b._count?.likes || 0) - (a._count?.likes || 0);
+    if (sortBy === 'comments') return (b._count?.comments || 0) - (a._count?.comments || 0);
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImg(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch('/api/posts/images', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setPostImages(prev => [...prev, d.url]);
+    } catch (e) { alert(e.message); }
+    finally { setUploadingImg(false); e.target.value = ''; }
+  };
+
   const submitPost = async (e) => {
     e.preventDefault();
     if (!postForm.title || !postForm.body) return;
@@ -73,11 +98,12 @@ export default function HomePage() {
       const tags = postForm.tags.split(',').map(t => t.trim()).filter(Boolean);
       const r = await fetch('/api/posts', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...postForm, tags }),
+        body: JSON.stringify({ ...postForm, tags, images: postImages }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
       setPostForm({ type: 'TIP', title: '', body: '', tags: '' });
+      setPostImages([]);
       setShowComposer(false);
       loadPosts();
     } catch (e) { alert(e.message); }
@@ -171,6 +197,24 @@ export default function HomePage() {
                     className="w-full h-32 resize-none" placeholder="내용을 작성하세요..." required />
                   <input value={postForm.tags} onChange={e => setPostForm({ ...postForm, tags: e.target.value })}
                     className="w-full" placeholder="태그 (쉼표로 구분: AI, 자동화, 팁)" />
+                  {/* Image upload */}
+                  <div>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-2 text-tx-3 text-[11px] hover:text-tx-1 cursor-pointer transition-colors">
+                      📷 {uploadingImg ? '업로드 중...' : '이미지 첨부'}
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImg} />
+                    </label>
+                    {postImages.length > 0 && (
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {postImages.map((url, i) => (
+                          <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-bg-3">
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <button type="button" onClick={() => setPostImages(prev => prev.filter((_, j) => j !== i))}
+                              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-bg-0/80 text-[9px] text-tx-1 flex items-center justify-center">✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setShowComposer(false)} className="px-4 py-2 rounded-lg text-xs text-tx-3 hover:text-tx-1 hover:bg-bg-2">취소</button>
                     <button type="submit" disabled={posting}
@@ -196,17 +240,34 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* Sort controls */}
+          <div className="flex items-center gap-2 mb-3">
+            {[['latest', '최신순'], ['popular', '인기순'], ['comments', '댓글순']].map(([k, l]) => (
+              <button key={k} onClick={() => setSortBy(k)}
+                className={`text-[11px] px-2.5 py-1 rounded-md transition-colors ${sortBy === k ? 'bg-bg-3 text-tx-0 font-semibold' : 'text-tx-3 hover:text-tx-1'}`}>
+                {l}
+              </button>
+            ))}
+          </div>
+
           {/* Feed */}
           {loading ? (
             <div className="space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="bg-bg-1 border border-bg-3 rounded-xl animate-pulse h-36" />)}</div>
-          ) : posts.length === 0 ? (
+          ) : sortedPosts.length === 0 ? (
             <div className="text-center py-16 text-tx-3">
               <div className="text-3xl mb-2">📝</div>
               <p className="text-sm">아직 게시글이 없습니다</p>
               <p className="text-xs mt-1 text-tx-3">첫 번째 글을 작성해보세요!</p>
             </div>
           ) : (
-            <div className="space-y-3">{posts.map(p => <PostCard key={p.id} post={p} onLike={handleLike} onDelete={(id) => setPosts(posts.filter(x => x.id !== id))} />)}</div>
+            <>
+              <div className="space-y-3">{sortedPosts.slice(0, visibleCount).map(p => <PostCard key={p.id} post={p} onLike={handleLike} onDelete={(id) => setPosts(posts.filter(x => x.id !== id))} onTagClick={(tag) => setSearch(tag)} />)}</div>
+              {sortedPosts.length > visibleCount && (
+                <button onClick={() => setVisibleCount(v => v + 20)} className="w-full mt-4 py-3 rounded-lg bg-bg-1 border border-bg-3 text-xs text-tx-2 hover:bg-bg-2 transition-colors">
+                  더 보기 ({sortedPosts.length - visibleCount}개 남음)
+                </button>
+              )}
+            </>
           )}
         </div>
       )}

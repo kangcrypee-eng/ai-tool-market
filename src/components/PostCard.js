@@ -26,7 +26,7 @@ function getTimeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-export default function PostCard({ post, onLike, onDelete }) {
+export default function PostCard({ post, onLike, onDelete, onTagClick }) {
   const { user } = useAuth();
   const style = typeStyles[post.type] || typeStyles.TIP;
   const liked = post.likes?.length > 0;
@@ -123,8 +123,17 @@ export default function PostCard({ post, onLike, onDelete }) {
       </div>
 
       {/* Content */}
-      <h3 className="text-sm font-semibold mb-1">{post.title}</h3>
+      <Link href={`/post/${post.id}`}><h3 className="text-sm font-semibold mb-1 hover:text-acc transition-colors cursor-pointer">{post.title}</h3></Link>
       <p className="text-[11px] sm:text-xs text-tx-2 leading-relaxed mb-3">{post.body}</p>
+
+      {/* Post images */}
+      {post.images?.length > 0 && (
+        <div className={`flex gap-2 mb-3 overflow-x-auto scrollbar-hide ${post.images.length === 1 ? '' : ''}`}>
+          {post.images.map((url, i) => (
+            <img key={i} src={url} alt="" className="rounded-lg border border-bg-3 max-h-48 object-cover flex-shrink-0" />
+          ))}
+        </div>
+      )}
 
       {/* Embedded tool card */}
       {post.tool && (
@@ -149,7 +158,7 @@ export default function PostCard({ post, onLike, onDelete }) {
       {/* Tags */}
       {post.tags?.length > 0 && (
         <div className="flex gap-1 flex-wrap mb-3">
-          {post.tags.map(t => <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-bg-2 text-tx-2">#{t}</span>)}
+          {post.tags.map(t => <button key={t} onClick={() => onTagClick?.(t)} className="text-[10px] px-2 py-0.5 rounded bg-bg-2 text-tx-2 hover:bg-bg-3 hover:text-acc transition-colors">#{t}</button>)}
         </div>
       )}
 

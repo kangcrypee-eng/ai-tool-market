@@ -43,7 +43,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const user = requireAuth(req);
-    const { type, title, body, tags, toolId } = await req.json();
+    const { type, title, body, tags, toolId, images } = await req.json();
     if (!title || !body) return NextResponse.json({ error: '제목과 내용은 필수입니다.' }, { status: 400 });
 
     const cleanTitle = sanitizeInput(title, LIMITS.postTitle);
@@ -60,6 +60,7 @@ export async function POST(req) {
         title: cleanTitle,
         body: cleanBody,
         tags: cleanTags,
+        images: Array.isArray(images) ? images.filter(u => typeof u === 'string' && /^https?:\/\//.test(u)).slice(0, 5) : [],
         toolId: toolId || null,
       },
       include: { author: { select: { id: true, name: true } } },

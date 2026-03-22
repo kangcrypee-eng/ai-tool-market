@@ -51,6 +51,14 @@ export default function RegisterPage() {
               {busy ? 'Creating...' : 'Create account'}
             </button>
           </form>
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-bg-3" /></div>
+            <div className="relative flex justify-center"><span className="px-2 bg-bg-1 text-[10px] text-tx-3">또는</span></div>
+          </div>
+          <a href="/api/auth/kakao"
+            className="w-full py-2.5 rounded-lg bg-[#FEE500] text-[#000000] text-xs font-semibold hover:brightness-95 transition-all flex items-center justify-center gap-2">
+            💬 카카오로 시작하기
+          </a>
           <p className="text-center text-xs text-tx-3 mt-5">
             이미 계정이 있으신가요? <Link href="/login" className="text-acc hover:underline">Login</Link>
           </p>

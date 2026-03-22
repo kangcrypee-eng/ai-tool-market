@@ -44,6 +44,14 @@ export default function LoginPage() {
               {busy ? 'Loading...' : 'Login'}
             </button>
           </form>
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-bg-3" /></div>
+            <div className="relative flex justify-center"><span className="px-2 bg-bg-1 text-[10px] text-tx-3">또는</span></div>
+          </div>
+          <a href="/api/auth/kakao"
+            className="w-full py-2.5 rounded-lg bg-[#FEE500] text-[#000000] text-xs font-semibold hover:brightness-95 transition-all flex items-center justify-center gap-2">
+            💬 카카오로 로그인
+          </a>
           <p className="text-center text-xs text-tx-3 mt-5">
             계정이 없으신가요? <Link href="/register" className="text-acc hover:underline">Sign up</Link>
           </p>

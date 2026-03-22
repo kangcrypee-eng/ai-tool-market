@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { sanitizeInput, LIMITS } from '@/lib/sanitize';
+import { createNotification } from '@/lib/notification';
 
 export async function GET(req, { params }) {
   const { id } = params;
@@ -25,6 +26,10 @@ export async function POST(req, { params }) {
       data: { userId: user.id, postId: id, content: cleanContent },
       include: { user: { select: { id: true, name: true } } },
     });
+    const post = await prisma.post.findUnique({ where: { id }, select: { authorId: true, title: true } });
+    if (post && post.authorId !== user.id) {
+      createNotification({ userId: post.authorId, type: 'COMMENT', message: `${user.name}님이 "${post.title}" 글에 댓글을 남겼습니다.`, linkUrl: `/post/${id}` });
+    }
     return NextResponse.json({ comment }, { status: 201 });
   } catch (e) {
     if (e.message === 'UNAUTHORIZED') return NextResponse.json({ error: '로그인 필요' }, { status: 401 });
