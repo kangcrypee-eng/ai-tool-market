@@ -48,8 +48,8 @@ export default function TermsPage() {
         <section>
           <h2 className="text-sm font-semibold text-tx-0 mb-3">제6조 (툴 등록 및 판매)</h2>
           <p>① 크리에이터는 플랫폼에 AI 자동화 툴을 등록할 수 있으며, 등록된 툴은 관리자 승인 후 공개됩니다.</p>
-          <p className="mt-2">② 크리에이터는 툴의 가격(1회 구매, 월 구독)을 자유롭게 설정할 수 있습니다.</p>
-          <p className="mt-2">③ 플랫폼은 결제 금액의 20%를 플랫폼 수수료로, 약 3%를 PG 수수료로 차감한 후 크리에이터에게 정산합니다.</p>
+          <p className="mt-2">② 크리에이터는 툴의 1회 구매 가격을 자유롭게 설정할 수 있습니다.</p>
+          <p className="mt-2">③ 플랫폼은 결제 금액의 20%를 플랫폼 수수료(PG 수수료 포함)로 차감한 후 크리에이터에게 정산합니다.</p>
           <p className="mt-2">④ 크리에이터는 자신이 등록하는 툴에 대한 모든 지식재산권을 보유하고 있거나 적법한 이용 권한이 있음을 보증합니다.</p>
         </section>
 
@@ -86,10 +86,9 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-sm font-semibold text-tx-0 mb-3">제12조 (환불)</h2>
-          <p>① 1회 구매 후 7일 이내, 툴을 사용하지 않은 경우 전액 환불 가능합니다.</p>
-          <p className="mt-2">② 월 구독은 구독 해지 시 이미 결제된 기간까지 이용 가능하며, 남은 기간에 대한 환불은 원칙적으로 불가합니다.</p>
-          <p className="mt-2">③ 환불 요청은 contact@crypee.io로 접수할 수 있습니다.</p>
-          <p className="mt-2">④ 툴의 하자가 있는 경우 결제일로부터 30일 이내 환불 요청이 가능합니다.</p>
+          <p>① 구매 후 7일 이내, 툴 콘텐츠를 사용하지 않은 경우 전액 환불 가능합니다.</p>
+          <p className="mt-2">② 환불 요청은 contact@crypee.io로 접수할 수 있습니다.</p>
+          <p className="mt-2">③ 툴의 하자가 있는 경우 결제일로부터 30일 이내 환불 요청이 가능합니다.</p>
         </section>
 
         <section>

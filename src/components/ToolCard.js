@@ -22,7 +22,7 @@ export default function ToolCard({ tool }) {
           <span className="absolute top-1.5 left-1.5 text-[9px] px-1.5 py-0.5 rounded bg-white/[0.08] text-tx-2">{tool.category}</span>
           {days > 0 ? (
             <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-acc-2/15 text-acc-2 font-semibold">{days}d free</span>
-          ) : (tool.isOneTimeEnabled || tool.isSubscriptionEnabled) ? (
+          ) : (tool.oneTimePrice && tool.oneTimePrice > 0) ? (
             <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 font-semibold">🔒 유료</span>
           ) : null}
         </div>
@@ -31,10 +31,9 @@ export default function ToolCard({ tool }) {
           <p className="text-[11px] text-tx-2 line-clamp-2 leading-relaxed mb-2 min-h-[30px]">{tool.description}</p>
           <div className="flex justify-between items-end">
             <div>
-              {days > 0 ? <div className="text-[11px] font-semibold text-acc-2">Free trial</div> : <>
-                {tool.isOneTimeEnabled && <div className="text-[11px] font-semibold text-tx-0">{fmt(tool.oneTimePrice)}</div>}
-                {tool.isSubscriptionEnabled && <div className="text-[10px] text-acc-2">{fmt(tool.subscriptionPrice)}/mo</div>}
-              </>}
+              {days > 0 ? <div className="text-[11px] font-semibold text-acc-2">Free trial</div> : (
+                <div className="text-[11px] font-semibold text-tx-0">{fmt(tool.oneTimePrice)}</div>
+              )}
             </div>
             <div className="text-[10px] text-tx-3">{tool.creator?.name}</div>
           </div>

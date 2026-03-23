@@ -19,17 +19,6 @@ enum ToolStatus {
   HIDDEN
 }
 
-enum SubscriptionStatus {
-  ACTIVE
-  PAUSED
-  CANCELED
-}
-
-enum PaymentType {
-  ONE_TIME
-  SUBSCRIPTION
-}
-
 enum PostType {
   TOOL_SHARE
   TIP
@@ -38,25 +27,28 @@ enum PostType {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  bio       String?
-  role      Role     @default(USER)
-  provider    String?  // kakao, google, etc.
-  providerId  String?  // external provider user id
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  bio           String?
+  role          Role     @default(USER)
+  provider      String?  // kakao, google, etc.
+  providerId    String?  // external provider user id
+  bankName      String?
+  accountNumber String?
+  accountHolder String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   tools         Tool[]
-  subscriptions Subscription[]
   payments      Payment[]
   ownerships    UserToolOwnership[]
   posts         Post[]
   comments      Comment[]
   postLikes     PostLike[]
   notifications Notification[]
+  settlements   Settlement[]
 }
 
 model Notification {
@@ -72,32 +64,28 @@ model Notification {
 }
 
 model Tool {
-  id                    String     @id @default(uuid())
-  name                  String
-  description           String
-  longDescription       String?
-  imageUrl              String?
-  toolUrl               String?    // 실제 툴 링크 (노션, 구글독스, 웹앱 URL 등)
-  toolContent           String?    // 텍스트 콘텐츠 (마크다운 — 프롬프트, 사용법, 가이드)
-  category              String     @default("general")
-  creatorId             String
-  isOneTimeEnabled      Boolean    @default(false)
-  oneTimePrice          Int?
-  isSubscriptionEnabled Boolean    @default(false)
-  subscriptionPrice     Int?
-  status                ToolStatus @default(PENDING)
-  freeTrialDays         Int        @default(30)
-  publishedAt           DateTime   @default(now())
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
+  id              String     @id @default(uuid())
+  name            String
+  description     String
+  longDescription String?
+  imageUrl        String?
+  toolUrl         String?    // 외부 링크
+  toolContent     String?    // 텍스트 콘텐츠 (마크다운)
+  category        String     @default("general")
+  creatorId       String
+  oneTimePrice    Int?       // null/0 = 무료, 1+ = 유료
+  status          ToolStatus @default(PENDING)
+  freeTrialDays   Int        @default(30)
+  publishedAt     DateTime   @default(now())
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  creator       User               @relation(fields: [creatorId], references: [id])
-  subscriptions Subscription[]
-  payments      Payment[]
-  ownerships    UserToolOwnership[]
-  posts         Post[]
-  comments      Comment[]
-  files         ToolFile[]
+  creator    User               @relation(fields: [creatorId], references: [id])
+  payments   Payment[]
+  ownerships UserToolOwnership[]
+  posts      Post[]
+  comments   Comment[]
+  files      ToolFile[]
 }
 
 model ToolFile {
@@ -155,41 +143,20 @@ model Comment {
   post Post? @relation(fields: [postId], references: [id])
 }
 
-model Subscription {
-  id            String             @id @default(uuid())
-  userId        String
-  toolId        String
-  billingKey    String?
-  price         Int
-  status        SubscriptionStatus @default(ACTIVE)
-  retryCount    Int                @default(0)
-  nextBillingAt DateTime
-  lastBilledAt  DateTime?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-
-  user     User      @relation(fields: [userId], references: [id])
-  tool     Tool      @relation(fields: [toolId], references: [id])
-  payments Payment[]
-}
-
 model Payment {
-  id             String      @id @default(uuid())
+  id             String   @id @default(uuid())
   userId         String
   toolId         String
-  subscriptionId String?
-  paymentType    PaymentType
   amountTotal    Int
-  platformFee    Int
-  creatorAmount  Int
-  pgFee          Int         @default(0)
+  platformFee    Int      // 20% (PG 포함)
+  creatorAmount  Int      // 80%
   tossPaymentKey String?
   tossOrderId    String?
-  paidAt         DateTime    @default(now())
+  status         String   @default("PAID") // PAID, REFUNDED
+  paidAt         DateTime @default(now())
 
-  user         User          @relation(fields: [userId], references: [id])
-  tool         Tool          @relation(fields: [toolId], references: [id])
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  tool Tool @relation(fields: [toolId], references: [id])
 }
 
 model UserToolOwnership {
@@ -202,4 +169,19 @@ model UserToolOwnership {
   tool Tool @relation(fields: [toolId], references: [id])
 
   @@unique([userId, toolId])
+}
+
+model Settlement {
+  id            String    @id @default(uuid())
+  creatorId     String
+  amount        Int
+  status        String    @default("PENDING") // PENDING, APPROVED, COMPLETED, REJECTED
+  bankName      String?
+  accountNumber String?
+  accountHolder String?
+  requestedAt   DateTime  @default(now())
+  completedAt   DateTime?
+  adminNote     String?
+
+  creator User @relation(fields: [creatorId], references: [id])
 }

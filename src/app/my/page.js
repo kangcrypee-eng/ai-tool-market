@@ -49,23 +49,15 @@ export default function MyPage() {
     setShowForm(true); setTab('tools');
   };
 
-  const cancelSub = async (id) => {
-    if (!confirm('구독을 해지하시겠습니까?')) return;
-    try {
-      const r = await fetch(`/api/subscriptions/${id}/cancel`, { method: 'POST' });
-      if (!r.ok) { const d = await r.json(); throw new Error(d.error || '해지 실패'); }
-      load();
-    } catch (e) { alert(e.message); }
-  };
 
   if (authLoad || loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-20 bg-bg-2 rounded-xl" /><div className="h-40 bg-bg-2 rounded-xl" /></div></div>;
 
+  const paymentEnabled = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true';
   const tabs = [
     { k: 'tools', l: `My tools (${data?.tools?.length || 0})` },
     { k: 'owned', l: `Owned (${data?.ownerships?.length || 0})` },
-    { k: 'subs', l: `Subs (${data?.subscriptions?.filter(s => s.status === 'ACTIVE').length || 0})` },
     { k: 'posts', l: `Posts (${data?.posts?.length || 0})` },
-    { k: 'payments', l: `Payments` },
+    ...(paymentEnabled ? [{ k: 'payments', l: `Payments` }] : []),
   ];
 
   return (
@@ -114,25 +106,13 @@ export default function MyPage() {
               <div><label className="block text-xs text-tx-2 mb-1">Image URL</label><input value={form.imageUrl} onChange={e => setForm({...form, imageUrl: e.target.value})} className="w-full" placeholder="https://..." /></div>
               <div><label className="block text-xs text-tx-2 mb-1">Free trial days</label><input type="number" value={form.freeTrialDays} onChange={e => setForm({...form, freeTrialDays: e.target.value})} className="w-full" min="0" /></div>
             </div>
-            <div className="border-t border-bg-3 pt-3">
-              <div className="text-xs font-semibold text-tx-2 mb-2">Pricing</div>
-              <div className="space-y-2">
-                <label className="flex items-start gap-3 p-3 rounded-lg border border-bg-3 hover:border-bg-4 cursor-pointer">
-                  <input type="checkbox" checked={form.isOneTimeEnabled} onChange={e => setForm({...form, isOneTimeEnabled: e.target.checked})} className="mt-0.5 accent-acc" />
-                  <div className="flex-1">
-                    <div className="text-xs font-medium">One-time purchase</div>
-                    {form.isOneTimeEnabled && <input type="number" value={form.oneTimePrice} onChange={e => setForm({...form, oneTimePrice: e.target.value})} className="mt-2 w-full" placeholder="Price (₩)" min="0" />}
-                  </div>
-                </label>
-                <label className="flex items-start gap-3 p-3 rounded-lg border border-bg-3 hover:border-bg-4 cursor-pointer">
-                  <input type="checkbox" checked={form.isSubscriptionEnabled} onChange={e => setForm({...form, isSubscriptionEnabled: e.target.checked})} className="mt-0.5 accent-acc" />
-                  <div className="flex-1">
-                    <div className="text-xs font-medium">Monthly subscription</div>
-                    {form.isSubscriptionEnabled && <input type="number" value={form.subscriptionPrice} onChange={e => setForm({...form, subscriptionPrice: e.target.value})} className="mt-2 w-full" placeholder="Monthly price (₩)" min="0" />}
-                  </div>
-                </label>
+            {paymentEnabled && (
+              <div className="border-t border-bg-3 pt-3">
+                <div className="text-xs font-semibold text-tx-2 mb-2">Price</div>
+                <input type="number" value={form.oneTimePrice} onChange={e => setForm({...form, oneTimePrice: e.target.value})} className="w-full" placeholder="가격 (₩) — 비워두면 무료" min="0" />
+                <p className="text-[10px] text-tx-3 mt-1">무료 체험 후 설정한 가격으로 유료 전환됩니다</p>
               </div>
-            </div>
+            )}
             <button type="submit" disabled={busy} className="px-5 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110 disabled:opacity-50">
               {busy ? 'Saving...' : editId ? 'Update' : 'Register'}
             </button>
@@ -175,25 +155,6 @@ export default function MyPage() {
               <div className="flex-1"><h4 className="text-xs font-semibold">{o.tool.name}</h4><p className="text-[10px] text-tx-3">{o.tool.description}</p></div>
               <span className="text-[9px] px-2 py-0.5 rounded bg-acc-2/10 text-acc-2 font-semibold">Owned</span>
             </Link>
-          ))}
-        </div>
-      )}
-
-      {/* Subscriptions */}
-      {tab === 'subs' && (
-        <div className="space-y-2">
-          {data?.subscriptions?.length === 0 ? <Empty icon="🔄" text="No subscriptions" /> : data.subscriptions.map(s => (
-            <div key={s.id} className="flex items-center gap-3 p-3 bg-bg-1 border border-bg-3 rounded-lg">
-              <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-sm">🔄</div>
-              <div className="flex-1">
-                <Link href={`/tool/${s.tool.id}`} className="text-xs font-semibold hover:text-acc">{s.tool.name}</Link>
-                <p className="text-[10px] text-tx-3">{fmt(s.price)}/mo · Next: {new Date(s.nextBillingAt).toLocaleDateString('ko-KR')}</p>
-              </div>
-              <span className={`text-[9px] px-2 py-0.5 rounded font-semibold ${s.status === 'ACTIVE' ? 'bg-acc/10 text-acc' : s.status === 'CANCELED' ? 'bg-acc-5/10 text-acc-5' : 'bg-bg-3 text-tx-3'}`}>
-                {s.status}
-              </span>
-              {s.status === 'ACTIVE' && <button onClick={() => cancelSub(s.id)} className="text-[10px] text-red-400 hover:underline">Cancel</button>}
-            </div>
           ))}
         </div>
       )}

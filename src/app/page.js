@@ -144,7 +144,7 @@ export default function HomePage() {
       {/* Notice banner */}
       <div className="bg-gradient-to-r from-acc-2/[0.06] to-acc/[0.06] border border-acc-2/15 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full bg-acc-5 flex-shrink-0 animate-pulse" />
-        <span className="text-xs text-tx-1">⚡ 모든 신규 툴은 등록 후 30일간 무료 체험 가능합니다</span>
+        <span className="text-xs text-tx-1">{process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true' ? '⚡ 모든 신규 툴은 등록 후 30일간 무료 체험 가능합니다' : '⚡ 현재 모든 툴은 무료로 이용 가능합니다'}</span>
       </div>
 
       {/* Search */}
@@ -302,30 +302,19 @@ export default function HomePage() {
                     <input value={toolForm.toolUrl} onChange={e => setToolForm({...toolForm, toolUrl: e.target.value})} className="w-full" placeholder="https://notion.so/my-tool 또는 https://my-app.com" />
                     <p className="text-[10px] text-tx-3 mt-1">노션, 구글 시트, 웹앱 URL 등. 파일은 등록 후 My 페이지에서 업로드할 수 있습니다.</p>
                   </div>
-                  <div>
-                    <label className="block text-xs text-tx-2 mb-1">무료 체험 기간 (일)</label>
-                    <input type="number" value={toolForm.freeTrialDays} onChange={e => setToolForm({...toolForm, freeTrialDays: e.target.value})} className="w-full" min="0" placeholder="30" />
-                  </div>
-                  <div className="border-t border-bg-3 pt-3">
-                    <div className="text-xs font-semibold text-tx-2 mb-2">결제 설정 (무료 체험 종료 후 적용)</div>
-                    <div className="space-y-2">
-                      <label className="flex items-start gap-3 p-3 rounded-lg border border-bg-3 hover:border-bg-4 cursor-pointer">
-                        <input type="checkbox" checked={toolForm.isOneTimeEnabled} onChange={e => setToolForm({...toolForm, isOneTimeEnabled: e.target.checked})} className="mt-0.5 accent-acc" />
-                        <div className="flex-1">
-                          <div className="text-xs font-medium">1회 구매</div>
-                          {toolForm.isOneTimeEnabled && <input type="number" value={toolForm.oneTimePrice} onChange={e => setToolForm({...toolForm, oneTimePrice: e.target.value})} className="mt-2 w-full" placeholder="가격 (₩)" min="0" />}
-                        </div>
-                      </label>
-                      <label className="flex items-start gap-3 p-3 rounded-lg border border-bg-3 hover:border-bg-4 cursor-pointer">
-                        <input type="checkbox" checked={toolForm.isSubscriptionEnabled} onChange={e => setToolForm({...toolForm, isSubscriptionEnabled: e.target.checked})} className="mt-0.5 accent-acc" />
-                        <div className="flex-1">
-                          <div className="text-xs font-medium">월 구독</div>
-                          {toolForm.isSubscriptionEnabled && <input type="number" value={toolForm.subscriptionPrice} onChange={e => setToolForm({...toolForm, subscriptionPrice: e.target.value})} className="mt-2 w-full" placeholder="월 가격 (₩)" min="0" />}
-                        </div>
-                      </label>
-                    </div>
-                    <p className="text-[10px] text-tx-3 mt-2">💡 30일 무료 체험 후 설정한 가격으로 유료 전환됩니다</p>
-                  </div>
+                  {process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true' && (
+                    <>
+                      <div>
+                        <label className="block text-xs text-tx-2 mb-1">무료 체험 기간 (일)</label>
+                        <input type="number" value={toolForm.freeTrialDays} onChange={e => setToolForm({...toolForm, freeTrialDays: e.target.value})} className="w-full" min="0" placeholder="30" />
+                      </div>
+                      <div className="border-t border-bg-3 pt-3">
+                        <div className="text-xs font-semibold text-tx-2 mb-2">가격 설정</div>
+                        <input type="number" value={toolForm.oneTimePrice} onChange={e => setToolForm({...toolForm, oneTimePrice: e.target.value})} className="w-full" placeholder="가격 (₩) — 비워두면 무료" min="0" />
+                        <p className="text-[10px] text-tx-3 mt-2">💡 무료 체험 후 설정한 가격으로 유료 전환됩니다. 비워두면 무료 툴로 등록됩니다.</p>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setShowToolForm(false)} className="px-4 py-2 rounded-lg text-xs text-tx-3 hover:text-tx-1 hover:bg-bg-2">취소</button>
                     <button type="submit" disabled={postingTool}

@@ -18,13 +18,14 @@ export async function GET(req) {
     const user = getAuthFromRequest(req);
     if (!user) return NextResponse.redirect(`${baseUrl}/payment/fail?message=${encodeURIComponent('로그인이 필요합니다.')}`);
 
-    // orderId format: order_{toolId}_{userId}_{timestamp}
+    // orderId format: order_{toolId}_{timestamp}
     const parts = orderId.split('_');
     const toolId = parts[1];
     if (!toolId) throw new Error('잘못된 주문번호');
 
     const tool = await prisma.tool.findUnique({ where: { id: toolId } });
-    if (!tool || !tool.isOneTimeEnabled) throw new Error('1회 구매가 불가능한 툴입니다.');
+    if (!tool) throw new Error('툴을 찾을 수 없습니다.');
+    if (!tool.oneTimePrice || tool.oneTimePrice <= 0) throw new Error('유료 구매가 불가능한 툴입니다.');
     if (amount !== tool.oneTimePrice) throw new Error('금액이 일치하지 않습니다.');
 
     const existing = await prisma.userToolOwnership.findUnique({
@@ -33,14 +34,14 @@ export async function GET(req) {
     if (existing) throw new Error('이미 구매한 툴입니다.');
 
     // Confirm with Toss
-    const toss = await confirmTossPayment(paymentKey, orderId, amount);
-    const { platformFee, pgFee, creatorAmount } = calculateFees(amount);
+    await confirmTossPayment(paymentKey, orderId, amount);
+    const { platformFee, creatorAmount } = calculateFees(amount);
 
     await prisma.$transaction([
       prisma.payment.create({
         data: {
-          userId: user.id, toolId, paymentType: 'ONE_TIME',
-          amountTotal: amount, platformFee, pgFee, creatorAmount,
+          userId: user.id, toolId,
+          amountTotal: amount, platformFee, creatorAmount,
           tossPaymentKey: paymentKey, tossOrderId: orderId,
         },
       }),

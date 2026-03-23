@@ -22,7 +22,7 @@ export async function GET(req) {
       where,
       include: {
         creator: { select: { id: true, name: true } },
-        _count: { select: { subscriptions: { where: { status: 'ACTIVE' } }, payments: true, comments: true } },
+        _count: { select: { payments: true, comments: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -48,10 +48,7 @@ export async function POST(req) {
         toolContent: b.toolContent || null,
         category: VALID_CATEGORIES.includes(b.category) ? b.category : 'general',
         creatorId: user.id,
-        isOneTimeEnabled: !!b.isOneTimeEnabled,
-        oneTimePrice: b.isOneTimeEnabled ? parseInt(b.oneTimePrice, 10) || 0 : null,
-        isSubscriptionEnabled: !!b.isSubscriptionEnabled,
-        subscriptionPrice: b.isSubscriptionEnabled ? parseInt(b.subscriptionPrice, 10) || 0 : null,
+        oneTimePrice: b.oneTimePrice ? parseInt(b.oneTimePrice, 10) : null,
         freeTrialDays: parseInt(b.freeTrialDays, 10) || 30,
         status: user.role === 'ADMIN' ? 'APPROVED' : 'PENDING',
       },

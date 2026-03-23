@@ -1,11 +1,9 @@
-const FEE_RATE = parseFloat(process.env.PLATFORM_FEE_RATE || '0.20');
-const PG_RATE = 0.03;
+const FEE_RATE = 0.20; // 20% (PG 포함)
 
 function calculateFees(amount) {
-  const pgFee = Math.round(amount * PG_RATE);
   const platformFee = Math.round(amount * FEE_RATE);
-  const creatorAmount = amount - platformFee - pgFee;
-  return { platformFee, pgFee, creatorAmount };
+  const creatorAmount = amount - platformFee;
+  return { platformFee, creatorAmount };
 }
 
 function getTrialDaysLeft(tool) {
@@ -35,17 +33,4 @@ async function confirmTossPayment(paymentKey, orderId, amount) {
   return data;
 }
 
-async function issueBillingKey(authKey, customerKey) {
-  const key = process.env.TOSS_SECRET_KEY;
-  const enc = Buffer.from(key + ':').toString('base64');
-  const res = await fetch('https://api.tosspayments.com/v1/billing/authorizations/issue', {
-    method: 'POST',
-    headers: { Authorization: `Basic ${enc}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ authKey, customerKey }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || '빌링키 발급 실패');
-  return data;
-}
-
-module.exports = { calculateFees, getTrialDaysLeft, isInFreeTrial, confirmTossPayment, issueBillingKey };
+module.exports = { calculateFees, getTrialDaysLeft, isInFreeTrial, confirmTossPayment };

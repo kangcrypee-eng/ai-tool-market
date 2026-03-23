@@ -22,20 +22,11 @@ export async function POST(req, { params }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || '토스 환불 실패');
 
-    // Remove ownership if one-time purchase
-    if (payment.paymentType === 'ONE_TIME') {
-      await prisma.userToolOwnership.deleteMany({
-        where: { userId: payment.userId, toolId: payment.toolId },
-      });
-    }
-
-    // Cancel subscription if subscription payment
-    if (payment.paymentType === 'SUBSCRIPTION' && payment.subscriptionId) {
-      await prisma.subscription.update({
-        where: { id: payment.subscriptionId },
-        data: { status: 'CANCELED' },
-      });
-    }
+    // Remove ownership + mark payment as refunded
+    await prisma.userToolOwnership.deleteMany({
+      where: { userId: payment.userId, toolId: payment.toolId },
+    });
+    await prisma.payment.update({ where: { id }, data: { status: 'REFUNDED' } });
 
     return NextResponse.json({ message: '환불이 완료되었습니다.', toss: data });
   } catch (e) {

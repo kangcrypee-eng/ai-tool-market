@@ -5,6 +5,7 @@ import { getTrialDaysLeft, isInFreeTrial } from '@/lib/payment';
 import { sanitizeInput, LIMITS } from '@/lib/sanitize';
 
 const VALID_CATEGORIES = ['general', 'automation', 'content', 'data', 'marketing', 'productivity'];
+const paymentEnabled = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true';
 
 export async function GET(req, { params }) {
   try {
@@ -15,27 +16,36 @@ export async function GET(req, { params }) {
         creator: { select: { id: true, name: true, bio: true } },
         files: { orderBy: { createdAt: 'desc' } },
         comments: { where: { postId: null }, include: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: 'desc' }, take: 20 },
-        _count: { select: { subscriptions: { where: { status: 'ACTIVE' } }, payments: true } },
+        _count: { select: { payments: true } },
       },
     });
     if (!tool) return NextResponse.json({ error: '툴을 찾을 수 없습니다.' }, { status: 404 });
 
-    let ownership = null, subscription = null;
+    let ownership = null;
     const user = getAuthFromRequest(req);
     if (user) {
       ownership = await prisma.userToolOwnership.findUnique({ where: { userId_toolId: { userId: user.id, toolId: id } } });
-      subscription = await prisma.subscription.findFirst({ where: { userId: user.id, toolId: id, status: 'ACTIVE' } });
     }
 
     const freeTrial = isInFreeTrial(tool);
     const trialDaysLeft = getTrialDaysLeft(tool);
-    const hasAccess = !!ownership || !!subscription || freeTrial;
     const isCreator = user && tool.creatorId === user.id;
     const isAdmin = user && user.role === 'ADMIN';
+    const isPaid = tool.oneTimePrice && tool.oneTimePrice > 0;
 
-    // Access control: hide toolUrl and files when locked
+    // Feature flag: if payment disabled, always grant access
+    let hasAccess;
+    if (!paymentEnabled) {
+      hasAccess = true;
+    } else {
+      hasAccess = !!ownership || freeTrial || !isPaid;
+    }
+
+    const isLocked = paymentEnabled && isPaid && !hasAccess && !isCreator && !isAdmin;
+
+    // Access control: hide protected content when locked
     const responseTool = { ...tool };
-    if (!hasAccess && !isCreator && !isAdmin) {
+    if (isLocked) {
       responseTool.toolUrl = null;
       responseTool.toolContent = null;
       responseTool.files = [];
@@ -45,10 +55,9 @@ export async function GET(req, { params }) {
       tool: responseTool,
       freeTrial,
       trialDaysLeft,
-      isLocked: !hasAccess && !isCreator && !isAdmin,
+      isLocked,
       userAccess: {
         owned: !!ownership,
-        subscribed: !!subscription,
         hasAccess: hasAccess || !!isCreator || !!isAdmin,
       },
     });
@@ -76,10 +85,7 @@ export async function PUT(req, { params }) {
         toolUrl: b.toolUrl != null ? (sanitizeInput(b.toolUrl, LIMITS.toolUrl) || null) : tool.toolUrl,
         toolContent: b.toolContent !== undefined ? (b.toolContent || null) : tool.toolContent,
         category: b.category && VALID_CATEGORIES.includes(b.category) ? b.category : tool.category,
-        isOneTimeEnabled: b.isOneTimeEnabled ?? tool.isOneTimeEnabled,
-        oneTimePrice: b.oneTimePrice !== undefined ? parseInt(b.oneTimePrice, 10) : tool.oneTimePrice,
-        isSubscriptionEnabled: b.isSubscriptionEnabled ?? tool.isSubscriptionEnabled,
-        subscriptionPrice: b.subscriptionPrice !== undefined ? parseInt(b.subscriptionPrice, 10) : tool.subscriptionPrice,
+        oneTimePrice: b.oneTimePrice !== undefined ? (b.oneTimePrice ? parseInt(b.oneTimePrice, 10) : null) : tool.oneTimePrice,
         ...(user.role === 'ADMIN' && b.status ? { status: b.status } : {}),
       },
     });
