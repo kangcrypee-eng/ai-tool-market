@@ -5,22 +5,17 @@ import { requireAuth } from '@/lib/auth';
 export async function GET(req) {
   try {
     const user = requireAuth(req);
-    const [profile, tools, ownerships, subscriptions, payments, posts] = await Promise.all([
-      prisma.user.findUnique({ where: { id: user.id }, select: { id: true, name: true, email: true, bio: true, role: true, createdAt: true } }),
+    const [profile, tools, ownerships, payments, posts] = await Promise.all([
+      prisma.user.findUnique({ where: { id: user.id }, select: { id: true, name: true, email: true, bio: true, role: true, bankName: true, accountNumber: true, accountHolder: true, createdAt: true } }),
       prisma.tool.findMany({
         where: { creatorId: user.id },
-        include: { _count: { select: { subscriptions: { where: { status: 'ACTIVE' } }, payments: true } } },
+        include: { _count: { select: { payments: true } } },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.userToolOwnership.findMany({
         where: { userId: user.id },
         include: { tool: { select: { id: true, name: true, description: true, category: true } } },
         orderBy: { purchasedAt: 'desc' },
-      }),
-      prisma.subscription.findMany({
-        where: { userId: user.id },
-        include: { tool: { select: { id: true, name: true, description: true } } },
-        orderBy: { createdAt: 'desc' },
       }),
       prisma.payment.findMany({
         where: { userId: user.id },
@@ -37,12 +32,12 @@ export async function GET(req) {
 
     // Creator earnings
     const earnings = await prisma.payment.aggregate({
-      where: { tool: { creatorId: user.id } },
+      where: { tool: { creatorId: user.id }, status: 'PAID' },
       _sum: { amountTotal: true, platformFee: true, creatorAmount: true },
     });
 
     return NextResponse.json({
-      profile, tools, ownerships, subscriptions, payments, posts,
+      profile, tools, ownerships, payments, posts,
       earnings: {
         total: earnings._sum.amountTotal || 0,
         fees: earnings._sum.platformFee || 0,

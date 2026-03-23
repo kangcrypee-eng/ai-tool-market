@@ -148,7 +148,7 @@ export default function PostCard({ post, onLike, onDelete, onTagClick }) {
               {(() => {
                 const d = getTrialDaysLeft(post.tool);
                 if (d > 0) return <><div className="text-[11px] font-semibold text-acc-2">Free</div><span className="text-[9px] text-acc-2">{d}d left</span></>;
-                return <div className="text-[11px] font-semibold">{fmt(post.tool.isOneTimeEnabled ? post.tool.oneTimePrice : post.tool.subscriptionPrice)}{post.tool.isSubscriptionEnabled ? '/mo' : ''}</div>;
+                return <div className="text-[11px] font-semibold">{fmt(post.tool.oneTimePrice)}</div>;
               })()}
             </div>
           </div>

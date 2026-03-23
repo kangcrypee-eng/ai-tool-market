@@ -30,10 +30,7 @@ export async function GET(req, { params }) {
       const ownership = await prisma.userToolOwnership.findUnique({
         where: { userId_toolId: { userId: user.id, toolId: id } },
       });
-      const subscription = await prisma.subscription.findFirst({
-        where: { userId: user.id, toolId: id, status: 'ACTIVE' },
-      });
-      hasAccess = !!ownership || !!subscription;
+      hasAccess = !!ownership;
     }
 
     if (!hasAccess) {

@@ -15,7 +15,7 @@ export default function MyPage() {
   const [tab, setTab] = useState('tools');
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', toolUrl: '', toolContent: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+  const [form, setForm] = useState({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', toolUrl: '', toolContent: '', oneTimePrice: '', freeTrialDays: '30' });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function MyPage() {
       const url = editId ? `/api/tools/${editId}` : '/api/tools';
       const r = await fetch(url, {
         method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, toolUrl: form.toolUrl || null, oneTimePrice: form.isOneTimeEnabled ? parseInt(form.oneTimePrice, 10) || 0 : null, subscriptionPrice: form.isSubscriptionEnabled ? parseInt(form.subscriptionPrice, 10) || 0 : null, freeTrialDays: parseInt(form.freeTrialDays, 10) || 30 }),
+        body: JSON.stringify({ ...form, toolUrl: form.toolUrl || null, oneTimePrice: form.oneTimePrice ? parseInt(form.oneTimePrice, 10) : null, freeTrialDays: parseInt(form.freeTrialDays, 10) || 30 }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
@@ -41,11 +41,11 @@ export default function MyPage() {
     finally { setBusy(false); }
   };
 
-  const resetForm = () => setForm({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', toolUrl: '', toolContent: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+  const resetForm = () => setForm({ name: '', description: '', longDescription: '', category: 'general', imageUrl: '', toolUrl: '', toolContent: '', oneTimePrice: '', freeTrialDays: '30' });
 
   const editTool = (t) => {
     setEditId(t.id);
-    setForm({ name: t.name, description: t.description, longDescription: t.longDescription || '', category: t.category, imageUrl: t.imageUrl || '', toolUrl: t.toolUrl || '', toolContent: t.toolContent || '', isOneTimeEnabled: t.isOneTimeEnabled, oneTimePrice: t.oneTimePrice?.toString() || '', isSubscriptionEnabled: t.isSubscriptionEnabled, subscriptionPrice: t.subscriptionPrice?.toString() || '', freeTrialDays: t.freeTrialDays?.toString() || '30' });
+    setForm({ name: t.name, description: t.description, longDescription: t.longDescription || '', category: t.category, imageUrl: t.imageUrl || '', toolUrl: t.toolUrl || '', toolContent: t.toolContent || '', oneTimePrice: t.oneTimePrice?.toString() || '', freeTrialDays: t.freeTrialDays?.toString() || '30' });
     setShowForm(true); setTab('tools');
   };
 
@@ -138,7 +138,7 @@ export default function MyPage() {
               <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-sm">🤖</div>
               <div className="flex-1 min-w-0">
                 <Link href={`/tool/${t.id}`} className="text-xs font-semibold hover:text-acc">{t.name}</Link>
-                <p className="text-[10px] text-tx-3">{t._count?.subscriptions || 0} subs · {t._count?.payments || 0} payments · <span className={t.status === 'APPROVED' ? 'text-acc-2' : t.status === 'PENDING' ? 'text-acc-5' : 'text-tx-3'}>{t.status}</span></p>
+                <p className="text-[10px] text-tx-3">{t._count?.payments || 0} payments · <span className={t.status === 'APPROVED' ? 'text-acc-2' : t.status === 'PENDING' ? 'text-acc-5' : 'text-tx-3'}>{t.status}</span></p>
               </div>
               <button onClick={() => editTool(t)} className="text-xs text-acc hover:underline">Edit</button>
             </div>

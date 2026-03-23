@@ -28,7 +28,7 @@ export default function HomePage() {
 
   // Tool upload
   const [showToolForm, setShowToolForm] = useState(false);
-  const [toolForm, setToolForm] = useState({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', toolContent: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+  const [toolForm, setToolForm] = useState({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', toolContent: '', oneTimePrice: '', freeTrialDays: '30' });
   const [postingTool, setPostingTool] = useState(false);
 
   const loadPosts = () => {
@@ -117,11 +117,11 @@ export default function HomePage() {
     try {
       const r = await fetch('/api/tools', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...toolForm, oneTimePrice: toolForm.isOneTimeEnabled ? parseInt(toolForm.oneTimePrice, 10) || 0 : null, subscriptionPrice: toolForm.isSubscriptionEnabled ? parseInt(toolForm.subscriptionPrice, 10) || 0 : null, freeTrialDays: parseInt(toolForm.freeTrialDays, 10) || 30 }),
+        body: JSON.stringify({ ...toolForm, oneTimePrice: toolForm.oneTimePrice ? parseInt(toolForm.oneTimePrice, 10) : null, freeTrialDays: parseInt(toolForm.freeTrialDays, 10) || 30 }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
-      setToolForm({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', toolContent: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+      setToolForm({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', toolContent: '', oneTimePrice: '', freeTrialDays: '30' });
       setShowToolForm(false);
       alert('툴이 등록되었습니다! 관리자 승인 후 마켓에 공개됩니다.');
       loadTools();
