@@ -30,7 +30,6 @@ export async function DELETE(req, { params }) {
       await tx.post.deleteMany({ where: { toolId: id } });
       await tx.payment.deleteMany({ where: { toolId: id } });
       await tx.userToolOwnership.deleteMany({ where: { toolId: id } });
-      await tx.subscription.deleteMany({ where: { toolId: id } });
       await tx.tool.delete({ where: { id } });
     });
 

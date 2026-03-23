@@ -188,7 +188,7 @@ export default function MyPage() {
                   <tr key={p.id} className="border-t border-bg-2 hover:bg-bg-2">
                     <td className="px-4 py-2.5 text-tx-3">{new Date(p.paidAt).toLocaleDateString('ko-KR')}</td>
                     <td className="px-4 py-2.5"><Link href={`/tool/${p.tool.id}`} className="hover:text-acc">{p.tool.name}</Link></td>
-                    <td className="px-4 py-2.5"><span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${p.paymentType === 'ONE_TIME' ? 'bg-acc-4/10 text-acc-4' : 'bg-acc/10 text-acc'}`}>{p.paymentType === 'ONE_TIME' ? '1-time' : 'Sub'}</span></td>
+                    <td className="px-4 py-2.5"><span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${p.status === 'PAID' ? 'bg-acc-2/10 text-acc-2' : 'bg-red-500/10 text-red-400'}`}>{p.status === 'PAID' ? 'Paid' : 'Refunded'}</span></td>
                     <td className="px-4 py-2.5 text-right font-semibold">{fmt(p.amountTotal)}</td>
                   </tr>
                 ))}

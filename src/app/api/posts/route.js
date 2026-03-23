@@ -20,7 +20,7 @@ export async function GET(req) {
 
     const include = {
       author: { select: { id: true, name: true } },
-      tool: { select: { id: true, name: true, category: true, subscriptionPrice: true, oneTimePrice: true, isOneTimeEnabled: true, isSubscriptionEnabled: true, freeTrialDays: true, publishedAt: true } },
+      tool: { select: { id: true, name: true, category: true, oneTimePrice: true, freeTrialDays: true, publishedAt: true } },
       _count: { select: { comments: true, likes: true } },
     };
     if (user) {
