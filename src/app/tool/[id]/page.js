@@ -148,13 +148,13 @@ export default function ToolDetailPage() {
         </div>
       </div>
 
-      {/* File downloads (only when access granted) */}
+      {/* File downloads (signed URL — only when access granted) */}
       {userAccess?.hasAccess && tool.files?.length > 0 && (
         <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6">
           <h2 className="text-sm font-semibold mb-3">📁 파일 다운로드</h2>
           <div className="space-y-2">
             {tool.files.map(f => (
-              <a key={f.id} href={f.fileUrl} target="_blank" rel="noopener noreferrer"
+              <a key={f.id} href={`/api/tools/${tool.id}/files/${f.id}`} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-lg bg-bg-2 border border-bg-3 hover:border-acc/30 transition-colors">
                 <span className="text-sm">📄</span>
                 <div className="flex-1 min-w-0">
@@ -168,7 +168,28 @@ export default function ToolDetailPage() {
         </div>
       )}
 
-      {/* Long description */}
+      {/* Locked files placeholder */}
+      {isLocked && (
+        <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-bg-1/80 backdrop-blur-sm flex items-center justify-center z-10">
+            <span className="text-xs text-tx-3">🔒 결제 후 접근 가능</span>
+          </div>
+          <h2 className="text-sm font-semibold mb-3 opacity-30">📁 파일 · 📝 텍스트 콘텐츠</h2>
+          <div className="h-16 bg-bg-2 rounded-lg opacity-20" />
+        </div>
+      )}
+
+      {/* Text content (only when access granted) */}
+      {userAccess?.hasAccess && tool.toolContent && (
+        <div className="bg-bg-1 border border-acc/20 rounded-xl p-5 mb-6">
+          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <span className="w-0.5 h-3.5 bg-acc-2 rounded" />📝 텍스트 콘텐츠
+          </h2>
+          <div className="text-xs text-tx-2 leading-relaxed whitespace-pre-line">{tool.toolContent}</div>
+        </div>
+      )}
+
+      {/* Long description (always visible) */}
       {tool.longDescription && (
         <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6">
           <h2 className="text-sm font-semibold mb-2">상세 설명</h2>

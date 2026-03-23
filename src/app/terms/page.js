@@ -68,6 +68,8 @@ export default function TermsPage() {
           <p className="ml-4">• 악성코드 또는 유해 프로그램을 배포하는 행위</p>
           <p className="ml-4">• 타인의 지식재산권을 침해하는 행위</p>
           <p className="ml-4">• 허위 정보를 등록하거나 유포하는 행위</p>
+          <p className="ml-4">• 구매 또는 열람한 디지털 콘텐츠(파일, 텍스트 콘텐츠, 프롬프트 등)를 무단으로 복제, 재배포, 재판매하는 행위</p>
+          <p className="ml-4">• 크리에이터의 텍스트 콘텐츠를 스크래핑, 자동 수집하거나 플랫폼 외부에 공개하는 행위</p>
         </section>
 
         <section>

@@ -37,6 +37,7 @@ export async function GET(req, { params }) {
     const responseTool = { ...tool };
     if (!hasAccess && !isCreator && !isAdmin) {
       responseTool.toolUrl = null;
+      responseTool.toolContent = null;
       responseTool.files = [];
     }
 
@@ -73,6 +74,7 @@ export async function PUT(req, { params }) {
         longDescription: b.longDescription != null ? sanitizeInput(b.longDescription, LIMITS.toolLongDesc) : tool.longDescription,
         imageUrl: b.imageUrl ?? tool.imageUrl,
         toolUrl: b.toolUrl != null ? (sanitizeInput(b.toolUrl, LIMITS.toolUrl) || null) : tool.toolUrl,
+        toolContent: b.toolContent !== undefined ? (b.toolContent || null) : tool.toolContent,
         category: b.category && VALID_CATEGORIES.includes(b.category) ? b.category : tool.category,
         isOneTimeEnabled: b.isOneTimeEnabled ?? tool.isOneTimeEnabled,
         oneTimePrice: b.oneTimePrice !== undefined ? parseInt(b.oneTimePrice, 10) : tool.oneTimePrice,

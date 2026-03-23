@@ -78,6 +78,7 @@ model Tool {
   longDescription       String?
   imageUrl              String?
   toolUrl               String?    // 실제 툴 링크 (노션, 구글독스, 웹앱 URL 등)
+  toolContent           String?    // 텍스트 콘텐츠 (마크다운 — 프롬프트, 사용법, 가이드)
   category              String     @default("general")
   creatorId             String
   isOneTimeEnabled      Boolean    @default(false)

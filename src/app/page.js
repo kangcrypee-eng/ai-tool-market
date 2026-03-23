@@ -28,7 +28,7 @@ export default function HomePage() {
 
   // Tool upload
   const [showToolForm, setShowToolForm] = useState(false);
-  const [toolForm, setToolForm] = useState({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+  const [toolForm, setToolForm] = useState({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', toolContent: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
   const [postingTool, setPostingTool] = useState(false);
 
   const loadPosts = () => {
@@ -121,7 +121,7 @@ export default function HomePage() {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
-      setToolForm({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
+      setToolForm({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', toolContent: '', isOneTimeEnabled: false, oneTimePrice: '', isSubscriptionEnabled: false, subscriptionPrice: '', freeTrialDays: '30' });
       setShowToolForm(false);
       alert('툴이 등록되었습니다! 관리자 승인 후 마켓에 공개됩니다.');
       loadTools();
@@ -295,7 +295,8 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div><label className="block text-xs text-tx-2 mb-1">짧은 설명 *</label><input value={toolForm.description} onChange={e => setToolForm({...toolForm, description: e.target.value})} className="w-full" placeholder="이 툴이 어떤 일을 하는지 한 줄로 설명해주세요" required /></div>
-                  <div><label className="block text-xs text-tx-2 mb-1">상세 설명</label><textarea value={toolForm.longDescription} onChange={e => setToolForm({...toolForm, longDescription: e.target.value})} className="w-full h-20 resize-none" placeholder="기능, 사용법, 특징 등을 자세히 설명해주세요" /></div>
+                  <div><label className="block text-xs text-tx-2 mb-1">상세 설명 (공개 — 미결제자도 볼 수 있음)</label><textarea value={toolForm.longDescription} onChange={e => setToolForm({...toolForm, longDescription: e.target.value})} className="w-full h-20 resize-none" placeholder="기능, 사용법, 특징 등을 자세히 설명해주세요" /></div>
+                  <div><label className="block text-xs text-tx-2 mb-1">📝 텍스트 콘텐츠 (결제 후 공개 — 프롬프트, 사용 가이드 등)</label><textarea value={toolForm.toolContent} onChange={e => setToolForm({...toolForm, toolContent: e.target.value})} className="w-full h-32 resize-none" placeholder="프롬프트 원문, 상세 사용법, 세팅 가이드, 업데이트 노트 등&#10;마크다운 형식으로 작성 가능합니다" /><p className="text-[10px] text-tx-3 mt-1">이 콘텐츠는 무료 체험 기간 또는 결제 후에만 볼 수 있습니다</p></div>
                   <div>
                     <label className="block text-xs text-tx-2 mb-1">툴 링크 (선택)</label>
                     <input value={toolForm.toolUrl} onChange={e => setToolForm({...toolForm, toolUrl: e.target.value})} className="w-full" placeholder="https://notion.so/my-tool 또는 https://my-app.com" />

@@ -45,6 +45,7 @@ export async function POST(req) {
         longDescription: sanitizeInput(b.longDescription, LIMITS.toolLongDesc) || '',
         imageUrl: b.imageUrl || null,
         toolUrl: sanitizeInput(b.toolUrl, LIMITS.toolUrl) || null,
+        toolContent: b.toolContent || null,
         category: VALID_CATEGORIES.includes(b.category) ? b.category : 'general',
         creatorId: user.id,
         isOneTimeEnabled: !!b.isOneTimeEnabled,
