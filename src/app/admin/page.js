@@ -53,7 +53,38 @@ export default function AdminPage() {
   if (authLoad || loading) return <div className="max-w-5xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-8 bg-bg-2 rounded w-1/4" /><div className="grid grid-cols-4 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-bg-2 rounded-xl" />)}</div></div></div>;
 
   const s = data?.stats;
-  const tabs = ['overview', 'tools', 'posts', 'users', 'payments'];
+  const [contestForm, setContestForm] = useState({ title: '', description: '', bannerText: '', startDate: '', endDate: '', votingEnd: '', resultDate: '', prizes: '', rules: '', status: 'UPCOMING' });
+  const [contests, setContests] = useState([]);
+  const [contestBusy, setContestBusy] = useState(false);
+  const [selectedContest, setSelectedContest] = useState(null);
+
+  const loadContests = () => fetch('/api/contests').then(r => r.json()).then(d => setContests(d.contests || [])).catch(() => {});
+
+  const saveContest = async (e) => {
+    e.preventDefault();
+    setContestBusy(true);
+    try {
+      const method = selectedContest ? 'PUT' : 'POST';
+      const url = selectedContest ? `/api/contests/${selectedContest}` : '/api/contests';
+      const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(contestForm) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setContestForm({ title: '', description: '', bannerText: '', startDate: '', endDate: '', votingEnd: '', resultDate: '', prizes: '', rules: '', status: 'UPCOMING' });
+      setSelectedContest(null);
+      loadContests();
+    } catch (e) { alert(e.message); }
+    finally { setContestBusy(false); }
+  };
+
+  const setWinner = async (contestId, entryId, status) => {
+    await fetch(`/api/admin/contests/${contestId}/winners`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: [{ entryId, status }] }),
+    });
+    loadContests();
+  };
+
+  const tabs = ['overview', 'tools', 'posts', 'users', 'payments', 'contests'];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -229,6 +260,66 @@ export default function AdminPage() {
               ))}</tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {/* Contests */}
+      {tab === 'contests' && (
+        <div className="space-y-6">
+          {/* Contest form */}
+          <div className="bg-bg-1 border border-bg-3 rounded-xl p-5">
+            <h3 className="text-sm font-semibold mb-3">{selectedContest ? '콘테스트 수정' : '새 콘테스트'}</h3>
+            <form onSubmit={saveContest} className="space-y-3">
+              <input value={contestForm.title} onChange={e => setContestForm({...contestForm, title: e.target.value})} className="w-full" placeholder="제목 *" required />
+              <textarea value={contestForm.description} onChange={e => setContestForm({...contestForm, description: e.target.value})} className="w-full h-20 resize-none" placeholder="설명 (마크다운) *" required />
+              <input value={contestForm.bannerText} onChange={e => setContestForm({...contestForm, bannerText: e.target.value})} className="w-full" placeholder="배너 한 줄 요약" />
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="block text-[10px] text-tx-3 mb-1">접수 시작일 *</label><input type="date" value={contestForm.startDate} onChange={e => setContestForm({...contestForm, startDate: e.target.value})} className="w-full" required /></div>
+                <div><label className="block text-[10px] text-tx-3 mb-1">접수 마감일 *</label><input type="date" value={contestForm.endDate} onChange={e => setContestForm({...contestForm, endDate: e.target.value})} className="w-full" required /></div>
+                <div><label className="block text-[10px] text-tx-3 mb-1">투표 마감일</label><input type="date" value={contestForm.votingEnd} onChange={e => setContestForm({...contestForm, votingEnd: e.target.value})} className="w-full" /></div>
+                <div><label className="block text-[10px] text-tx-3 mb-1">발표일</label><input type="date" value={contestForm.resultDate} onChange={e => setContestForm({...contestForm, resultDate: e.target.value})} className="w-full" /></div>
+              </div>
+              <textarea value={contestForm.prizes} onChange={e => setContestForm({...contestForm, prizes: e.target.value})} className="w-full h-16 resize-none" placeholder="시상 정보 (마크다운)" />
+              <textarea value={contestForm.rules} onChange={e => setContestForm({...contestForm, rules: e.target.value})} className="w-full h-16 resize-none" placeholder="출품 가이드 + 심사 기준 (마크다운)" />
+              <select value={contestForm.status} onChange={e => setContestForm({...contestForm, status: e.target.value})} className="w-full">
+                {['UPCOMING', 'ACTIVE', 'VOTING', 'ENDED'].map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <button type="submit" disabled={contestBusy} className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110 disabled:opacity-50">
+                  {contestBusy ? '저장 중...' : selectedContest ? '수정' : '생성'}
+                </button>
+                {selectedContest && <button type="button" onClick={() => { setSelectedContest(null); setContestForm({ title: '', description: '', bannerText: '', startDate: '', endDate: '', votingEnd: '', resultDate: '', prizes: '', rules: '', status: 'UPCOMING' }); }} className="px-4 py-2 text-xs text-tx-3">취소</button>}
+              </div>
+            </form>
+          </div>
+
+          {/* Contest list */}
+          <div className="bg-bg-1 border border-bg-3 rounded-xl overflow-x-auto">
+            {contests.length === 0 ? (
+              <div className="text-center py-8 text-tx-3 text-xs">
+                <button onClick={loadContests} className="text-acc hover:underline">콘테스트 목록 불러오기</button>
+              </div>
+            ) : (
+              <table className="w-full text-xs min-w-[500px]">
+                <thead><tr className="bg-bg-2 text-tx-3 text-[10px]">
+                  <th className="text-left px-4 py-2.5">Title</th>
+                  <th className="text-left px-4 py-2.5">Status</th>
+                  <th className="text-left px-4 py-2.5">Entries</th>
+                  <th className="text-right px-4 py-2.5">Actions</th>
+                </tr></thead>
+                <tbody>{contests.map(c => (
+                  <tr key={c.id} className="border-t border-bg-2 hover:bg-bg-2">
+                    <td className="px-4 py-2.5 font-semibold">{c.title}</td>
+                    <td className="px-4 py-2.5"><span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${c.status === 'ACTIVE' ? 'bg-acc-2/10 text-acc-2' : c.status === 'VOTING' ? 'bg-acc/10 text-acc' : c.status === 'ENDED' ? 'bg-bg-3 text-tx-3' : 'bg-acc-5/10 text-acc-5'}`}>{c.status}</span></td>
+                    <td className="px-4 py-2.5 text-tx-3">{c._count?.entries || 0}</td>
+                    <td className="px-4 py-2.5 text-right space-x-1">
+                      <button onClick={() => { setSelectedContest(c.id); setContestForm({ title: c.title, description: c.description, bannerText: c.bannerText || '', startDate: c.startDate?.slice(0,10) || '', endDate: c.endDate?.slice(0,10) || '', votingEnd: c.votingEnd?.slice(0,10) || '', resultDate: c.resultDate?.slice(0,10) || '', prizes: c.prizes || '', rules: c.rules || '', status: c.status }); }} className="text-[10px] px-2 py-0.5 rounded bg-acc/10 text-acc hover:bg-acc/20">Edit</button>
+                    </td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
     </div>

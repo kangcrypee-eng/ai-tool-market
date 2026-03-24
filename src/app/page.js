@@ -20,6 +20,15 @@ export default function HomePage() {
   const [toolSort, setToolSort] = useState('latest');
   const [visibleCount, setVisibleCount] = useState(20);
 
+  // Contest
+  const [contest, setContest] = useState(null);
+  const [contestEntries, setContestEntries] = useState([]);
+  const [contestLoading, setContestLoading] = useState(false);
+  const [showEntryForm, setShowEntryForm] = useState(false);
+  const [entryForm, setEntryForm] = useState({ title: '', description: '', videoUrl: '', images: '' });
+  const [submittingEntry, setSubmittingEntry] = useState(false);
+  const [expandedEntry, setExpandedEntry] = useState(null);
+
   // Composer
   const [showComposer, setShowComposer] = useState(false);
   const [postForm, setPostForm] = useState({ type: 'TIP', title: '', body: '', tags: '' });
@@ -45,10 +54,30 @@ export default function HomePage() {
     if (toolSort !== 'latest') p.set('sort', toolSort);
     return fetch(`/api/tools?${p}`).then(r => r.json()).then(d => setTools(d.tools || []));
   };
+  const loadContest = async () => {
+    setContestLoading(true);
+    try {
+      const r = await fetch('/api/contests');
+      const d = await r.json();
+      const active = (d.contests || []).find(c => ['ACTIVE', 'VOTING', 'UPCOMING'].includes(c.status));
+      const ended = (d.contests || []).find(c => c.status === 'ENDED');
+      const target = active || ended;
+      if (target) {
+        const dr = await fetch(`/api/contests/${target.id}`);
+        const dd = await dr.json();
+        setContest(dd.contest);
+        setContestEntries(dd.contest?.entries || []);
+      } else {
+        setContest(null);
+        setContestEntries([]);
+      }
+    } catch {} finally { setContestLoading(false); }
+  };
 
   useEffect(() => {
     setLoading(true);
-    (mode === 'market' ? loadTools() : loadPosts()).finally(() => setLoading(false));
+    if (mode === 'contest') { loadContest().finally(() => setLoading(false)); }
+    else { (mode === 'market' ? loadTools() : loadPosts()).finally(() => setLoading(false)); }
   }, [mode, toolCat, postCat, search, toolSort]);
 
   const handleLike = async (postId) => {
@@ -90,6 +119,33 @@ export default function HomePage() {
       setPostImages(prev => [...prev, d.url]);
     } catch (e) { alert(e.message); }
     finally { setUploadingImg(false); e.target.value = ''; }
+  };
+
+  const submitEntry = async (e) => {
+    e.preventDefault();
+    if (!entryForm.title || !entryForm.description) return;
+    setSubmittingEntry(true);
+    try {
+      const images = entryForm.images.split(',').map(s => s.trim()).filter(Boolean);
+      const r = await fetch(`/api/contests/${contest.id}/entries`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...entryForm, images }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setEntryForm({ title: '', description: '', videoUrl: '', images: '' });
+      setShowEntryForm(false);
+      loadContest();
+    } catch (e) { alert(e.message); }
+    finally { setSubmittingEntry(false); }
+  };
+
+  const likeEntry = async (entryId) => {
+    if (!user) { alert('로그인이 필요합니다'); return; }
+    setContestEntries(prev => prev.map(e => e.id === entryId ? { ...e, _count: { ...e._count, votes: (e._count?.votes || 0) + 1 }, _liked: true } : e));
+    try {
+      await fetch(`/api/contests/entries/${entryId}/like`, { method: 'POST' });
+    } catch {}
   };
 
   const submitPost = async (e) => {
@@ -135,7 +191,7 @@ export default function HomePage() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Mode switch */}
       <div className="flex bg-bg-1 border border-bg-3 rounded-lg p-1 mb-4 max-w-xs mx-auto">
-        {[['community', '💬 Community'], ['market', '🛒 Market']].map(([m, label]) => (
+        {[['community', '💬 Community'], ['market', '🛒 Market'], ['contest', '🏆 Contest']].map(([m, label]) => (
           <button key={m} onClick={() => setMode(m)}
             className={`flex-1 py-2 rounded-md text-xs font-semibold transition-colors ${mode === m ? 'bg-bg-3 text-tx-0' : 'text-tx-3 hover:text-tx-1'}`}>
             {label}
@@ -354,6 +410,158 @@ export default function HomePage() {
             <div className="text-center py-16 text-tx-3"><div className="text-3xl mb-2">🔍</div><p className="text-sm">등록된 툴이 없습니다</p></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{tools.map(t => <ToolCard key={t.id} tool={t} />)}</div>
+          )}
+        </div>
+      )}
+
+      {/* ===== CONTEST MODE ===== */}
+      {mode === 'contest' && (
+        <div className="max-w-3xl mx-auto">
+          {contestLoading ? (
+            <div className="space-y-4"><div className="h-48 bg-bg-2 rounded-xl animate-pulse" /><div className="h-32 bg-bg-2 rounded-xl animate-pulse" /></div>
+          ) : !contest ? (
+            <div className="text-center py-20">
+              <div className="text-4xl mb-3">🏆</div>
+              <h2 className="text-lg font-semibold mb-2">Contest</h2>
+              <p className="text-sm text-tx-3 mb-1">아직 진행 중인 콘테스트가 없습니다</p>
+              <p className="text-xs text-tx-3">곧 새로운 챌린지가 열릴 예정입니다</p>
+              <p className="text-xs text-tx-3 mt-4">📢 소식을 놓치지 마세요!</p>
+            </div>
+          ) : (
+            <>
+              {/* Hero banner */}
+              <div className="bg-gradient-to-br from-[#1a1a2e] via-[#16162a] to-[#0e0e1a] border border-acc-5/20 rounded-2xl p-6 sm:p-8 mb-6 text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(220,220,170,0.06),transparent_70%)]" />
+                <div className="relative z-10">
+                  <div className="text-3xl sm:text-4xl font-bold text-acc-5 mb-2">{contest.title}</div>
+                  {contest.bannerText && <p className="text-sm text-tx-2 mb-4">{contest.bannerText}</p>}
+                  {contest.prizes && (
+                    <span className="inline-block px-4 py-1.5 rounded-full bg-acc-5/10 border border-acc-5/20 text-acc-5 text-xs font-semibold">
+                      🏆 총 상금 확인하기
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div className="flex items-center justify-center gap-4 mb-6 text-[11px]">
+                {[
+                  { label: '접수', date: contest.startDate && contest.endDate ? `${new Date(contest.startDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}~${new Date(contest.endDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}` : '', active: contest.status === 'ACTIVE' },
+                  { label: '투표', date: contest.votingEnd ? `~${new Date(contest.votingEnd).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}` : '', active: contest.status === 'VOTING' },
+                  { label: '발표', date: contest.resultDate ? new Date(contest.resultDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'}) : '', active: contest.status === 'ENDED' },
+                ].map((s, i) => (
+                  <div key={i} className={`text-center ${s.active ? 'text-acc font-semibold' : 'text-tx-3'}`}>
+                    <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${s.active ? 'bg-acc' : 'bg-bg-4'}`} />
+                    <div>{s.label}{s.active && ' ·'}</div>
+                    <div className="text-[10px]">{s.date}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Actions */}
+              {contest.status === 'ACTIVE' && (
+                <div className="flex gap-2 justify-center mb-6">
+                  {contest.rules && (
+                    <button onClick={() => setExpandedEntry(expandedEntry === 'rules' ? null : 'rules')}
+                      className="px-4 py-2 rounded-lg bg-bg-2 border border-bg-3 text-xs text-tx-2 hover:bg-bg-3">출품 가이드</button>
+                  )}
+                  {user && (
+                    <button onClick={() => setShowEntryForm(!showEntryForm)}
+                      className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">출품하기</button>
+                  )}
+                </div>
+              )}
+
+              {/* Rules expandable */}
+              {expandedEntry === 'rules' && contest.rules && (
+                <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6 text-xs text-tx-2 leading-relaxed whitespace-pre-line">{contest.rules}</div>
+              )}
+
+              {/* Prizes */}
+              {contest.prizes && (
+                <div className="bg-bg-1 border border-acc-5/10 rounded-xl p-4 mb-6 text-xs text-tx-2 whitespace-pre-line">{contest.prizes}</div>
+              )}
+
+              {/* Entry form */}
+              {showEntryForm && contest.status === 'ACTIVE' && user && (
+                <div className="bg-bg-1 border border-acc/30 rounded-xl p-5 mb-6">
+                  <h3 className="text-sm font-semibold mb-3">출품하기</h3>
+                  <form onSubmit={submitEntry} className="space-y-3">
+                    <input value={entryForm.title} onChange={e => setEntryForm({...entryForm, title: e.target.value})} className="w-full" placeholder="제목 *" required />
+                    <textarea value={entryForm.description} onChange={e => setEntryForm({...entryForm, description: e.target.value})} className="w-full h-32 resize-none" placeholder="설명 * (마크다운 가능)" required />
+                    <input value={entryForm.videoUrl} onChange={e => setEntryForm({...entryForm, videoUrl: e.target.value})} className="w-full" placeholder="작동 영상 URL (YouTube 등, 선택)" />
+                    <input value={entryForm.images} onChange={e => setEntryForm({...entryForm, images: e.target.value})} className="w-full" placeholder="스크린샷 URL (쉼표로 구분, 선택)" />
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={() => setShowEntryForm(false)} className="px-4 py-2 text-xs text-tx-3 hover:text-tx-1">취소</button>
+                      <button type="submit" disabled={submittingEntry} className="px-5 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110 disabled:opacity-50">
+                        {submittingEntry ? '출품 중...' : '출품하기'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Entries */}
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">출품작 ({contestEntries.length})</h3>
+                <span className="text-[10px] text-tx-3">추천순</span>
+              </div>
+
+              {contestEntries.length === 0 ? (
+                <div className="text-center py-12 text-tx-3 text-xs">아직 출품작이 없습니다</div>
+              ) : (
+                <div className="space-y-3">
+                  {contestEntries.map((entry, idx) => {
+                    const isWinner = entry.status?.startsWith('WINNER');
+                    const medal = entry.status === 'WINNER_1' ? '🥇' : entry.status === 'WINNER_2' ? '🥈' : entry.status === 'WINNER_3' ? '🥉' : null;
+                    return (
+                      <div key={entry.id} className={`bg-bg-1 border rounded-xl p-4 transition-colors ${isWinner ? 'border-acc-5/30' : 'border-bg-3 hover:border-bg-4'}`}>
+                        <div className="flex items-start gap-3">
+                          <div className="text-lg font-bold text-tx-3 w-6 text-center flex-shrink-0">{medal || idx + 1}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <button onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)} className="text-sm font-semibold hover:text-acc transition-colors text-left">{entry.title}</button>
+                              {entry.videoUrl && <span className="text-[10px] text-tx-3">▶ 데모</span>}
+                            </div>
+                            <p className="text-[11px] text-tx-3 mb-1">by {entry.user?.name}</p>
+                            <p className="text-xs text-tx-2 line-clamp-2">{entry.description}</p>
+
+                            {/* Expanded detail */}
+                            {expandedEntry === entry.id && (
+                              <div className="mt-3 pt-3 border-t border-bg-2 space-y-3">
+                                <p className="text-xs text-tx-2 whitespace-pre-line">{entry.description}</p>
+                                {entry.videoUrl && (
+                                  <a href={entry.videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-acc hover:underline">▶ 데모 영상 보기</a>
+                                )}
+                                {entry.images?.length > 0 && (
+                                  <div className="flex gap-2 overflow-x-auto">
+                                    {entry.images.map((img, i) => <img key={i} src={img} alt="" className="h-32 rounded-lg border border-bg-3 object-cover" />)}
+                                  </div>
+                                )}
+                                {entry.tool && (
+                                  <a href={`/tool/${entry.tool.id}`} className="inline-block text-xs text-acc hover:underline">🔗 마켓에서 보기: {entry.tool.name}</a>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <button onClick={() => likeEntry(entry.id)}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${entry._liked ? 'bg-red-500/10 text-red-400' : 'bg-bg-2 text-tx-3 hover:bg-red-500/10 hover:text-red-400'}`}>
+                            {entry._liked ? '♥' : '♡'} {entry._count?.votes || 0}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Ended contest results */}
+              {contest.status === 'ENDED' && contestEntries.some(e => e.status?.startsWith('WINNER')) && (
+                <div className="mt-6 pt-6 border-t border-bg-3">
+                  <p className="text-xs text-tx-3 text-center">📢 다음 콘테스트를 준비 중입니다</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
