@@ -436,9 +436,7 @@ export default function HomePage() {
                   <div className="text-3xl sm:text-4xl font-bold text-acc-5 mb-2">{contest.title}</div>
                   {contest.bannerText && <p className="text-sm text-tx-2 mb-4">{contest.bannerText}</p>}
                   {contest.prizes && (
-                    <span className="inline-block px-4 py-1.5 rounded-full bg-acc-5/10 border border-acc-5/20 text-acc-5 text-xs font-semibold">
-                      🏆 총 상금 확인하기
-                    </span>
+                    <div className="mt-3 text-xs text-tx-2 leading-relaxed whitespace-pre-line">{contest.prizes}</div>
                   )}
                 </div>
               </div>
@@ -478,9 +476,6 @@ export default function HomePage() {
               )}
 
               {/* Prizes */}
-              {contest.prizes && (
-                <div className="bg-bg-1 border border-acc-5/10 rounded-xl p-4 mb-6 text-xs text-tx-2 whitespace-pre-line">{contest.prizes}</div>
-              )}
 
               {/* Entry form */}
               {showEntryForm && contest.status === 'ACTIVE' && user && (
