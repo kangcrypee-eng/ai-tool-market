@@ -14,6 +14,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('overview');
   const [deleting, setDeleting] = useState(null);
+  const [contestForm, setContestForm] = useState({ title: '', description: '', bannerText: '', startDate: '', endDate: '', votingEnd: '', resultDate: '', prizes: '', rules: '', status: 'UPCOMING' });
+  const [contests, setContests] = useState([]);
+  const [contestBusy, setContestBusy] = useState(false);
+  const [selectedContest, setSelectedContest] = useState(null);
 
   useEffect(() => {
     if (authLoad) return;
@@ -53,10 +57,6 @@ export default function AdminPage() {
   if (authLoad || loading) return <div className="max-w-5xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-8 bg-bg-2 rounded w-1/4" /><div className="grid grid-cols-4 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-bg-2 rounded-xl" />)}</div></div></div>;
 
   const s = data?.stats;
-  const [contestForm, setContestForm] = useState({ title: '', description: '', bannerText: '', startDate: '', endDate: '', votingEnd: '', resultDate: '', prizes: '', rules: '', status: 'UPCOMING' });
-  const [contests, setContests] = useState([]);
-  const [contestBusy, setContestBusy] = useState(false);
-  const [selectedContest, setSelectedContest] = useState(null);
 
   const loadContests = () => fetch('/api/contests').then(r => r.json()).then(d => setContests(d.contests || [])).catch(() => {});
 
