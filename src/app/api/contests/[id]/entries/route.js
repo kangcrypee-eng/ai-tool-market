@@ -9,7 +9,6 @@ export async function GET(req, { params }) {
       where: { contestId: id, status: { not: 'REJECTED' } },
       include: {
         user: { select: { id: true, name: true } },
-        tool: { select: { id: true, name: true } },
         _count: { select: { votes: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -33,14 +32,13 @@ export async function POST(req, { params }) {
     const existing = await prisma.contestEntry.findFirst({ where: { contestId: id, userId: user.id } });
     if (existing) return NextResponse.json({ error: '이미 출품하셨습니다. 1인 1출품만 가능합니다.' }, { status: 400 });
 
-    const { title, description, videoUrl, tryUrl, images, toolId } = await req.json();
+    const { title, description, videoUrl, tryUrl, images } = await req.json();
     if (!title || !description) return NextResponse.json({ error: '제목과 설명은 필수입니다.' }, { status: 400 });
 
     const entry = await prisma.contestEntry.create({
       data: {
         contestId: id,
         userId: user.id,
-        toolId: toolId || null,
         title,
         description,
         videoUrl: videoUrl || null,

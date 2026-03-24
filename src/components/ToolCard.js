@@ -20,7 +20,6 @@ export default function ToolCard({ tool }) {
         <div className={`h-20 bg-gradient-to-br ${bgs[tool.category] || bgs.general} flex items-center justify-center text-2xl relative`}>
           {emojis[tool.category] || '🤖'}
           <span className="absolute top-1.5 left-1.5 text-[9px] px-1.5 py-0.5 rounded bg-white/[0.08] text-tx-2">{tool.category}</span>
-          {tool.winnerBadge && <span className="absolute bottom-1.5 left-1.5 text-sm">{tool.winnerBadge === 'WINNER_1' ? '🥇' : tool.winnerBadge === 'WINNER_2' ? '🥈' : '🥉'}</span>}
           {days > 0 ? (
             <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-acc-2/15 text-acc-2 font-semibold">{days}d free</span>
           ) : (tool.oneTimePrice && tool.oneTimePrice > 0) ? (

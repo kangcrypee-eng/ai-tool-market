@@ -28,26 +28,7 @@ export async function GET(req) {
       orderBy: sort === 'popular' ? [{ viewCount: 'desc' }, { createdAt: 'desc' }] : { createdAt: 'desc' },
     });
 
-    // Winner tools pinned to top (within 1 month of resultDate)
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    const winners = await prisma.contestEntry.findMany({
-      where: { status: { in: ['WINNER_1', 'WINNER_2', 'WINNER_3'] }, toolId: { not: null }, contest: { resultDate: { gte: oneMonthAgo } } },
-      select: { toolId: true, status: true },
-      orderBy: { status: 'asc' },
-    });
-    const winnerToolIds = new Set(winners.map(w => w.toolId));
-    const winnerStatus = Object.fromEntries(winners.map(w => [w.toolId, w.status]));
-
-    // Add winner badge info and sort winners to top
-    const result = tools.map(t => ({ ...t, winnerBadge: winnerStatus[t.id] || null }));
-    result.sort((a, b) => {
-      const aW = winnerToolIds.has(a.id) ? 0 : 1;
-      const bW = winnerToolIds.has(b.id) ? 0 : 1;
-      return aW - bW;
-    });
-
-    return NextResponse.json({ tools: result });
+    return NextResponse.json({ tools });
   } catch (e) {
     return NextResponse.json({ error: '조회 실패' }, { status: 500 });
   }

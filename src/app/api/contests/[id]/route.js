@@ -14,7 +14,6 @@ export async function GET(req, { params }) {
           where: { status: { not: 'REJECTED' } },
           include: {
             user: { select: { id: true, name: true } },
-            tool: { select: { id: true, name: true } },
             _count: { select: { votes: true } },
             ...(user ? { votes: { where: { userId: user.id }, select: { id: true } } } : {}),
           },

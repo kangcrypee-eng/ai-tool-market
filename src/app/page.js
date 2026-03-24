@@ -544,9 +544,6 @@ export default function HomePage() {
                                       {entry.images.slice(1).map((img, i) => <img key={i} src={img} alt="" className="h-32 rounded-lg border border-bg-3 object-cover" />)}
                                     </div>
                                   )}
-                                  {entry.tool && (
-                                    <a href={`/tool/${entry.tool.id}`} className="inline-block text-xs text-acc hover:underline">🔗 마켓에서 보기: {entry.tool.name}</a>
-                                  )}
                               </div>
                             )}
 
