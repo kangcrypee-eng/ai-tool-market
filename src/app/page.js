@@ -4,6 +4,12 @@ import { useAuth } from '@/components/AuthProvider';
 import ToolCard from '@/components/ToolCard';
 import PostCard from '@/components/PostCard';
 
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+}
+
 const TOOL_CATS = [{ k: 'all', l: '전체' }, { k: 'automation', l: '자동화' }, { k: 'content', l: '콘텐츠' }, { k: 'data', l: '데이터' }, { k: 'marketing', l: '마케팅' }, { k: 'productivity', l: '생산성' }];
 const POST_CATS = [{ k: 'all', l: 'All' }, { k: 'TOOL_SHARE', l: 'Tools' }, { k: 'TIP', l: 'Tips' }, { k: 'QUESTION', l: 'Q&A' }, { k: 'REVIEW', l: 'Reviews' }];
 
@@ -25,7 +31,7 @@ export default function HomePage() {
   const [contestEntries, setContestEntries] = useState([]);
   const [contestLoading, setContestLoading] = useState(false);
   const [showEntryForm, setShowEntryForm] = useState(false);
-  const [entryForm, setEntryForm] = useState({ title: '', description: '', videoUrl: '', images: '' });
+  const [entryForm, setEntryForm] = useState({ title: '', description: '', videoUrl: '', tryUrl: '', images: '' });
   const [submittingEntry, setSubmittingEntry] = useState(false);
   const [expandedEntry, setExpandedEntry] = useState(null);
 
@@ -133,7 +139,7 @@ export default function HomePage() {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
-      setEntryForm({ title: '', description: '', videoUrl: '', images: '' });
+      setEntryForm({ title: '', description: '', videoUrl: '', tryUrl: '', images: '' });
       setShowEntryForm(false);
       loadContest();
     } catch (e) { alert(e.message); }
@@ -484,7 +490,8 @@ export default function HomePage() {
                   <form onSubmit={submitEntry} className="space-y-3">
                     <input value={entryForm.title} onChange={e => setEntryForm({...entryForm, title: e.target.value})} className="w-full" placeholder="제목 *" required />
                     <textarea value={entryForm.description} onChange={e => setEntryForm({...entryForm, description: e.target.value})} className="w-full h-32 resize-none" placeholder="설명 * (마크다운 가능)" required />
-                    <input value={entryForm.videoUrl} onChange={e => setEntryForm({...entryForm, videoUrl: e.target.value})} className="w-full" placeholder="작동 영상 URL (YouTube 등, 선택)" />
+                    <input value={entryForm.videoUrl} onChange={e => setEntryForm({...entryForm, videoUrl: e.target.value})} className="w-full" placeholder="데모 영상 URL (YouTube) — 카드에 임베드로 표시됨" />
+                    <input value={entryForm.tryUrl} onChange={e => setEntryForm({...entryForm, tryUrl: e.target.value})} className="w-full" placeholder="사용해보기 URL — 유저가 직접 써볼 수 있는 링크" />
                     <input value={entryForm.images} onChange={e => setEntryForm({...entryForm, images: e.target.value})} className="w-full" placeholder="스크린샷 URL (쉼표로 구분, 선택)" />
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => setShowEntryForm(false)} className="px-4 py-2 text-xs text-tx-3 hover:text-tx-1">취소</button>
@@ -509,42 +516,57 @@ export default function HomePage() {
                   {contestEntries.map((entry, idx) => {
                     const isWinner = entry.status?.startsWith('WINNER');
                     const medal = entry.status === 'WINNER_1' ? '🥇' : entry.status === 'WINNER_2' ? '🥈' : entry.status === 'WINNER_3' ? '🥉' : null;
+                    const embedUrl = getYouTubeEmbedUrl(entry.videoUrl);
                     return (
-                      <div key={entry.id} className={`bg-bg-1 border rounded-xl p-4 transition-colors ${isWinner ? 'border-acc-5/30' : 'border-bg-3 hover:border-bg-4'}`}>
-                        <div className="flex items-start gap-3">
-                          <div className="text-lg font-bold text-tx-3 w-6 text-center flex-shrink-0">{medal || idx + 1}</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <button onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)} className="text-sm font-semibold hover:text-acc transition-colors text-left">{entry.title}</button>
-                              {entry.videoUrl && <span className="text-[10px] text-tx-3">▶ 데모</span>}
-                            </div>
-                            <p className="text-[11px] text-tx-3 mb-1">by {entry.user?.name}</p>
-                            <p className="text-xs text-tx-2 line-clamp-2">{entry.description}</p>
+                      <div key={entry.id} className={`bg-bg-1 border rounded-xl overflow-hidden transition-colors ${isWinner ? 'border-acc-5/30' : 'border-bg-3 hover:border-bg-4'}`}>
+                        {/* YouTube embed */}
+                        {embedUrl && (
+                          <iframe src={embedUrl} className="w-full aspect-video" style={{ borderRadius: '12px 12px 0 0' }} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                        )}
+                        {/* Screenshot fallback if no video */}
+                        {!embedUrl && entry.images?.length > 0 && (
+                          <img src={entry.images[0]} alt="" className="w-full aspect-video object-cover" style={{ borderRadius: '12px 12px 0 0' }} />
+                        )}
+                        <div className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="text-lg font-bold text-tx-3 w-6 text-center flex-shrink-0">{medal || idx + 1}</div>
+                            <div className="flex-1 min-w-0">
+                              <button onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)} className="text-sm font-semibold hover:text-acc transition-colors text-left mb-1">{entry.title}</button>
+                              <p className="text-[11px] text-tx-3 mb-1">by {entry.user?.name}</p>
+                              <p className="text-xs text-tx-2 line-clamp-2">{entry.description}</p>
 
-                            {/* Expanded detail */}
-                            {expandedEntry === entry.id && (
-                              <div className="mt-3 pt-3 border-t border-bg-2 space-y-3">
-                                <p className="text-xs text-tx-2 whitespace-pre-line">{entry.description}</p>
-                                {entry.videoUrl && (
-                                  <a href={entry.videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-acc hover:underline">▶ 데모 영상 보기</a>
-                                )}
-                                {entry.images?.length > 0 && (
-                                  <div className="flex gap-2 overflow-x-auto">
-                                    {entry.images.map((img, i) => <img key={i} src={img} alt="" className="h-32 rounded-lg border border-bg-3 object-cover" />)}
-                                  </div>
-                                )}
-                                {entry.tool && (
-                                  <a href={`/tool/${entry.tool.id}`} className="inline-block text-xs text-acc hover:underline">🔗 마켓에서 보기: {entry.tool.name}</a>
-                                )}
+                              {/* Expanded detail */}
+                              {expandedEntry === entry.id && (
+                                <div className="mt-3 pt-3 border-t border-bg-2 space-y-3">
+                                  <p className="text-xs text-tx-2 whitespace-pre-line">{entry.description}</p>
+                                  {entry.images?.length > 1 && (
+                                    <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                                      {entry.images.slice(1).map((img, i) => <img key={i} src={img} alt="" className="h-32 rounded-lg border border-bg-3 object-cover" />)}
+                                    </div>
+                                  )}
+                                  {entry.tool && (
+                                    <a href={`/tool/${entry.tool.id}`} className="inline-block text-xs text-acc hover:underline">🔗 마켓에서 보기: {entry.tool.name}</a>
+                                  )}
                               </div>
                             )}
+
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-2 mt-3">
+                              {entry.tryUrl && /^https?:\/\//i.test(entry.tryUrl) && (
+                                <a href={entry.tryUrl} target="_blank" rel="noopener noreferrer"
+                                  className="px-3 py-1.5 rounded-full bg-acc/10 text-acc text-[11px] font-semibold hover:bg-acc/20 transition-colors">
+                                  🔗 사용해보기
+                                </a>
+                              )}
+                              <button onClick={() => likeEntry(entry.id)}
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${entry._liked ? 'bg-red-500/10 text-red-400' : 'bg-bg-2 text-tx-3 hover:bg-red-500/10 hover:text-red-400'}`}>
+                                {entry._liked ? '♥' : '♡'} {entry._count?.votes || 0}
+                              </button>
+                            </div>
                           </div>
-                          <button onClick={() => likeEntry(entry.id)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${entry._liked ? 'bg-red-500/10 text-red-400' : 'bg-bg-2 text-tx-3 hover:bg-red-500/10 hover:text-red-400'}`}>
-                            {entry._liked ? '♥' : '♡'} {entry._count?.votes || 0}
-                          </button>
                         </div>
                       </div>
+                    </div>
                     );
                   })}
                 </div>

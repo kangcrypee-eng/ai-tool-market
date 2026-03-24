@@ -33,7 +33,7 @@ export async function POST(req, { params }) {
     const existing = await prisma.contestEntry.findFirst({ where: { contestId: id, userId: user.id } });
     if (existing) return NextResponse.json({ error: '이미 출품하셨습니다. 1인 1출품만 가능합니다.' }, { status: 400 });
 
-    const { title, description, videoUrl, images, toolId } = await req.json();
+    const { title, description, videoUrl, tryUrl, images, toolId } = await req.json();
     if (!title || !description) return NextResponse.json({ error: '제목과 설명은 필수입니다.' }, { status: 400 });
 
     const entry = await prisma.contestEntry.create({
@@ -44,6 +44,7 @@ export async function POST(req, { params }) {
         title,
         description,
         videoUrl: videoUrl || null,
+        tryUrl: tryUrl || null,
         images: Array.isArray(images) ? images.filter(u => typeof u === 'string').slice(0, 5) : [],
       },
       include: { user: { select: { id: true, name: true } } },

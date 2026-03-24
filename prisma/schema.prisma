@@ -214,7 +214,8 @@ model ContestEntry {
   toolId      String?
   title       String
   description String
-  videoUrl    String?
+  videoUrl    String?    // YouTube URL (임베드용)
+  tryUrl      String?    // 사용해보기 링크 (새 탭)
   images      String[] @default([])
   status      String   @default("SUBMITTED") // SUBMITTED, APPROVED, WINNER_1, WINNER_2, WINNER_3
   createdAt   DateTime @default(now())
