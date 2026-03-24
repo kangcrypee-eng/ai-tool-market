@@ -435,53 +435,53 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              {/* Hero banner */}
+              {/* Hero banner (all info inside) */}
               <div className="bg-gradient-to-br from-[#1a1a2e] via-[#16162a] to-[#0e0e1a] border border-acc-5/20 rounded-2xl p-6 sm:p-8 mb-6 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(220,220,170,0.06),transparent_70%)]" />
                 <div className="relative z-10">
                   <div className="text-3xl sm:text-4xl font-bold text-acc-5 mb-2">{contest.title}</div>
-                  {contest.bannerText && <p className="text-sm text-tx-2 mb-4">{contest.bannerText}</p>}
-                  {contest.prizes && (
-                    <div className="mt-3 text-xs text-tx-2 leading-relaxed whitespace-pre-line">{contest.prizes}</div>
-                  )}
-                </div>
-              </div>
+                  {contest.bannerText && <p className="text-sm text-tx-2 mb-5">{contest.bannerText}</p>}
 
-              {/* Timeline */}
-              <div className="flex items-center justify-center gap-4 mb-6 text-[11px]">
-                {[
-                  { label: '접수', date: contest.startDate && contest.endDate ? `${new Date(contest.startDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}~${new Date(contest.endDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}` : '', active: contest.status === 'ACTIVE' },
-                  { label: '투표', date: contest.votingEnd ? `~${new Date(contest.votingEnd).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}` : '', active: contest.status === 'VOTING' },
-                  { label: '발표', date: contest.resultDate ? new Date(contest.resultDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'}) : '', active: contest.status === 'ENDED' },
-                ].map((s, i) => (
-                  <div key={i} className={`text-center ${s.active ? 'text-acc font-semibold' : 'text-tx-3'}`}>
-                    <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${s.active ? 'bg-acc' : 'bg-bg-4'}`} />
-                    <div>{s.label}{s.active && ' ·'}</div>
-                    <div className="text-[10px]">{s.date}</div>
+                  {/* Timeline inside banner */}
+                  <div className="flex items-center justify-center gap-6 mb-5 text-[11px]">
+                    {[
+                      { label: '접수', date: contest.startDate && contest.endDate ? `${new Date(contest.startDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}~${new Date(contest.endDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}` : '', active: contest.status === 'ACTIVE' },
+                      { label: '투표', date: contest.votingEnd ? `~${new Date(contest.votingEnd).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'})}` : '', active: contest.status === 'VOTING' },
+                      { label: '발표', date: contest.resultDate ? new Date(contest.resultDate).toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'}) : '', active: contest.status === 'ENDED' },
+                    ].map((s, i) => (
+                      <div key={i} className={`text-center ${s.active ? 'text-acc font-semibold' : 'text-tx-3'}`}>
+                        <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${s.active ? 'bg-acc animate-pulse' : 'bg-bg-4'}`} />
+                        <div>{s.label}{s.active && ' ·'}</div>
+                        <div className="text-[10px]">{s.date}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Actions */}
-              {contest.status === 'ACTIVE' && (
-                <div className="flex gap-2 justify-center mb-6">
-                  {contest.rules && (
-                    <button onClick={() => setExpandedEntry(expandedEntry === 'rules' ? null : 'rules')}
-                      className="px-4 py-2 rounded-lg bg-bg-2 border border-bg-3 text-xs text-tx-2 hover:bg-bg-3">출품 가이드</button>
+                  {/* Prizes inside banner */}
+                  {contest.prizes && (
+                    <div className="text-xs text-tx-2 leading-relaxed whitespace-pre-line mb-5 bg-white/[0.03] rounded-xl p-4 inline-block text-left">{contest.prizes}</div>
                   )}
-                  {user && (
-                    <button onClick={() => setShowEntryForm(!showEntryForm)}
-                      className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">출품하기</button>
+
+                  {/* Actions inside banner */}
+                  {contest.status === 'ACTIVE' && (
+                    <div className="flex gap-2 justify-center">
+                      {contest.rules && (
+                        <button onClick={() => setExpandedEntry(expandedEntry === 'rules' ? null : 'rules')}
+                          className="px-4 py-2 rounded-lg bg-white/[0.06] border border-white/10 text-xs text-tx-2 hover:bg-white/10">출품 가이드</button>
+                      )}
+                      {user && (
+                        <button onClick={() => setShowEntryForm(!showEntryForm)}
+                          className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">출품하기</button>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
+              </div>
 
               {/* Rules expandable */}
               {expandedEntry === 'rules' && contest.rules && (
                 <div className="bg-bg-1 border border-bg-3 rounded-xl p-5 mb-6 text-xs text-tx-2 leading-relaxed whitespace-pre-line">{contest.rules}</div>
               )}
-
-              {/* Prizes */}
 
               {/* Entry form */}
               {showEntryForm && contest.status === 'ACTIVE' && user && (
