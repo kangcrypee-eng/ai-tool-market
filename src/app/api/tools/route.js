@@ -11,6 +11,7 @@ export async function GET(req) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const creatorId = searchParams.get('creatorId');
+    const sort = searchParams.get('sort');
     const where = {};
     const user = getAuthFromRequest(req);
     if (!user || user.role !== 'ADMIN') where.status = 'APPROVED';
@@ -24,7 +25,7 @@ export async function GET(req) {
         creator: { select: { id: true, name: true } },
         _count: { select: { payments: true, comments: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: sort === 'popular' ? [{ viewCount: 'desc' }, { createdAt: 'desc' }] : { createdAt: 'desc' },
     });
     return NextResponse.json({ tools });
   } catch (e) {

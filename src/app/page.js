@@ -17,6 +17,7 @@ export default function HomePage() {
   const [toolCat, setToolCat] = useState('all');
   const [postCat, setPostCat] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
+  const [toolSort, setToolSort] = useState('latest');
   const [visibleCount, setVisibleCount] = useState(20);
 
   // Composer
@@ -41,13 +42,14 @@ export default function HomePage() {
     const p = new URLSearchParams();
     if (toolCat !== 'all') p.set('category', toolCat);
     if (search) p.set('search', search);
+    if (toolSort !== 'latest') p.set('sort', toolSort);
     return fetch(`/api/tools?${p}`).then(r => r.json()).then(d => setTools(d.tools || []));
   };
 
   useEffect(() => {
     setLoading(true);
     (mode === 'market' ? loadTools() : loadPosts()).finally(() => setLoading(false));
-  }, [mode, toolCat, postCat, search]);
+  }, [mode, toolCat, postCat, search, toolSort]);
 
   const handleLike = async (postId) => {
     if (!user) { alert('로그인이 필요합니다'); return; }
@@ -275,6 +277,16 @@ export default function HomePage() {
       {/* ===== MARKET MODE ===== */}
       {mode === 'market' && (
         <div>
+          {/* Sort controls */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            {[['latest', '🕐 최신순'], ['popular', '🔥 인기순']].map(([k, l]) => (
+              <button key={k} onClick={() => setToolSort(k)}
+                className={`text-[11px] px-3 py-1.5 rounded-md transition-colors ${toolSort === k ? 'bg-bg-3 text-tx-0 font-semibold' : 'text-tx-3 hover:text-tx-1'}`}>
+                {l}
+              </button>
+            ))}
+          </div>
+
           {/* Tool upload trigger / form */}
           {user ? (
             showToolForm ? (

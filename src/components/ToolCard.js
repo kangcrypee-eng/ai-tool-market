@@ -35,7 +35,10 @@ export default function ToolCard({ tool }) {
                 <div className="text-[11px] font-semibold text-tx-0">{fmt(tool.oneTimePrice)}</div>
               )}
             </div>
-            <div className="text-[10px] text-tx-3">{tool.creator?.name}</div>
+            <div className="flex items-center gap-1.5 text-[10px] text-tx-3">
+              <span>{tool.creator?.name}</span>
+              {tool._count?.comments > 0 && <span className="text-acc-5">⭐ {tool._count.comments}</span>}
+            </div>
           </div>
         </div>
       </div>

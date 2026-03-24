@@ -10,6 +10,7 @@ const paymentEnabled = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true';
 export async function GET(req, { params }) {
   try {
     const { id } = params;
+    prisma.tool.update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
     const tool = await prisma.tool.findUnique({
       where: { id },
       include: {
