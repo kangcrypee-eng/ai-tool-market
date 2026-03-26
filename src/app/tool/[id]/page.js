@@ -38,16 +38,18 @@ export default function ToolDetailPage() {
 
   const handlePurchase = async () => {
     if (!user) return router.push('/login');
+    const t = data?.tool;
+    if (!t) return;
     setPaying(true);
     try {
       const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!tossClientKey || !window.TossPayments) throw new Error('결제 시스템을 로드할 수 없습니다.');
       const tossPayments = window.TossPayments(tossClientKey);
-      const orderId = `order_${tool.id}_${Date.now()}`;
+      const orderId = `order_${t.id}_${Date.now()}`;
       await tossPayments.requestPayment('카드', {
-        amount: tool.oneTimePrice,
+        amount: t.oneTimePrice,
         orderId,
-        orderName: tool.name,
+        orderName: t.name,
         customerName: user.name,
         successUrl: `${window.location.origin}/api/payments/toss-success`,
         failUrl: `${window.location.origin}/api/payments/toss-fail`,
