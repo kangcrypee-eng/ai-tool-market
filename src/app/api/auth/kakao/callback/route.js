@@ -80,6 +80,7 @@ export async function GET(req) {
     return res;
   } catch (e) {
     console.error('Kakao login error:', e);
-    return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(e.message || '카카오 로그인 실패')}`);
+    const errMsg = e?.message || e?.toString() || '카카오 로그인 실패';
+    return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(errMsg.slice(0, 200))}`);
   }
 }

@@ -1,18 +1,20 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function LoginPage() {
+function LoginContent() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
+  const params = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => { if (!loading && user) router.push('/'); }, [user, loading]);
+  useEffect(() => { const e = params.get('error'); if (e) setError(e); }, [params]);
 
   const submit = async (e) => {
     e.preventDefault(); setError(''); setBusy(true);
@@ -60,4 +62,8 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  return <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center"><div className="animate-pulse h-40 w-80 bg-bg-2 rounded-xl" /></div>}><LoginContent /></Suspense>;
 }
