@@ -31,13 +31,24 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-tx-1 mb-3">정보</h4>
+            <h4 className="text-xs font-semibold text-tx-1 mb-3">고객지원</h4>
             <div className="space-y-2">
               <span className="block text-xs text-tx-3">문의: contact@crypee.io</span>
-              <span className="block text-xs text-tx-3">🚧 현재 베타 서비스 운영 중</span>
+              <span className="block text-xs text-tx-3">전화: 010-5077-2773</span>
             </div>
           </div>
         </div>
+
+        {/* 사업자 정보 */}
+        <div className="border-t border-bg-3 pt-6 mb-6">
+          <div className="text-[10px] text-tx-3 leading-relaxed space-y-1">
+            <p>주식회사 크리피솔루션즈 | 대표: 민동선</p>
+            <p>사업자등록번호: 173-87-02739 | 통신판매업 신고번호: 제 2025-서울강남-04832호</p>
+            <p>주소: 서울특별시 강남구 테헤란로 431, 에스7018호 (삼성동, 저스트코타워)</p>
+            <p>이메일: contact@crypee.io | 전화: 010-5077-2773</p>
+          </div>
+        </div>
+
         <div className="border-t border-bg-3 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <span className="text-[11px] text-tx-3">© 2025 crypee. All rights reserved.</span>
           <div className="flex gap-4">
