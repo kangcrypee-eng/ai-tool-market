@@ -51,11 +51,12 @@ export default function MyPage() {
   };
 
 
+  const [referralData, setReferralData] = useState(null);
+  const loadReferral = () => fetch('/api/referral').then(r => r.json()).then(setReferralData).catch(() => {});
+
   if (authLoad || loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-20 bg-bg-2 rounded-xl" /><div className="h-40 bg-bg-2 rounded-xl" /></div></div>;
 
   const paymentEnabled = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true';
-  const [referralData, setReferralData] = useState(null);
-  const loadReferral = () => fetch('/api/referral').then(r => r.json()).then(setReferralData).catch(() => {});
 
   const tabs = [
     { k: 'tools', l: `My tools (${data?.tools?.length || 0})` },
