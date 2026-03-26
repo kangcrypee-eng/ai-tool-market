@@ -15,6 +15,9 @@ export const metadata = {
     description: 'AI 자동화 툴을 만들고, 공유하고, 함께 성장하는 커뮤니티 플랫폼',
   },
   robots: { index: true, follow: true },
+  verification: {
+    naver: '3fdf3f039b466d2fb951d517cdeda35deaac25a4',
+  },
 };
 
 export default function RootLayout({ children }) {
