@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
+import Badge from './Badge';
 import { useState, useRef, useEffect } from 'react';
 
 const typeStyles = {
@@ -106,7 +107,10 @@ export default function PostCard({ post, onLike, onDelete, onTagClick }) {
       <div className="flex items-center gap-2 sm:gap-3 mb-3">
         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-bg-3 flex items-center justify-center text-xs font-bold text-tx-1">{post.author?.name?.[0]}</div>
         <div className="flex-1 min-w-0">
-          <div className="text-[11px] sm:text-xs font-semibold text-tx-0">{post.author?.name}</div>
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[11px] sm:text-xs font-semibold text-tx-0">{post.author?.name}</span>
+            {post.author?.badges?.map(b => <Badge key={b} code={b} />)}
+          </div>
           <div className="text-[10px] text-tx-3">{timeAgo}</div>
         </div>
         <span className={`text-[9px] px-2 py-0.5 rounded font-semibold ${style.cls}`}>{style.label}</span>

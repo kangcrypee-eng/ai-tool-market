@@ -13,7 +13,7 @@ export async function GET(req, { params }) {
         entries: {
           where: { status: { not: 'REJECTED' } },
           include: {
-            user: { select: { id: true, name: true } },
+            user: { select: { id: true, name: true, badges: true } },
             _count: { select: { votes: true } },
             ...(user ? { votes: { where: { userId: user.id }, select: { id: true } } } : {}),
           },

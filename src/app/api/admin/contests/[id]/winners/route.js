@@ -12,10 +12,15 @@ export async function POST(req, { params }) {
 
     for (const e of entries) {
       if (!['WINNER_1', 'WINNER_2', 'WINNER_3'].includes(e.status)) continue;
-      await prisma.contestEntry.update({
+      const entry = await prisma.contestEntry.update({
         where: { id: e.entryId },
         data: { status: e.status },
       });
+      // Auto-grant winner badge
+      const u = await prisma.user.findUnique({ where: { id: entry.userId }, select: { badges: true } });
+      if (u && !u.badges.includes(e.status)) {
+        await prisma.user.update({ where: { id: entry.userId }, data: { badges: { push: e.status } } });
+      }
     }
 
     // Set contest to ENDED

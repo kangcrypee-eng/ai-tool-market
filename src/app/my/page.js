@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import Badge from '@/components/Badge';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -53,11 +54,15 @@ export default function MyPage() {
   if (authLoad || loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-20 bg-bg-2 rounded-xl" /><div className="h-40 bg-bg-2 rounded-xl" /></div></div>;
 
   const paymentEnabled = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true';
+  const [referralData, setReferralData] = useState(null);
+  const loadReferral = () => fetch('/api/referral').then(r => r.json()).then(setReferralData).catch(() => {});
+
   const tabs = [
     { k: 'tools', l: `My tools (${data?.tools?.length || 0})` },
     { k: 'owned', l: `Owned (${data?.ownerships?.length || 0})` },
     { k: 'posts', l: `Posts (${data?.posts?.length || 0})` },
     ...(paymentEnabled ? [{ k: 'payments', l: `Payments` }] : []),
+    { k: 'referral', l: '친구 초대' },
   ];
 
   return (
@@ -66,7 +71,10 @@ export default function MyPage() {
       <div className="flex items-center gap-4 mb-6 p-5 bg-bg-1 border border-bg-3 rounded-xl">
         <div className="w-14 h-14 rounded-xl bg-bg-3 flex items-center justify-center text-xl font-bold text-acc">{data?.profile?.name?.[0]}</div>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold">{data?.profile?.name}</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-lg font-semibold">{data?.profile?.name}</h1>
+            {data?.profile?.badges?.map(b => <Badge key={b} code={b} />)}
+          </div>
           <p className="text-xs text-tx-3">{data?.profile?.bio || data?.profile?.email}</p>
           <div className="flex gap-4 mt-1">
             <span className="text-xs text-tx-2"><b className="text-tx-0">{data?.tools?.length || 0}</b> tools</span>
@@ -194,6 +202,51 @@ export default function MyPage() {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+
+      {/* Referral */}
+      {tab === 'referral' && (
+        <div className="bg-bg-1 border border-bg-3 rounded-xl p-5">
+          {!referralData ? (
+            <div className="text-center py-8">
+              <button onClick={loadReferral} className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">초대 정보 불러오기</button>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-sm font-semibold mb-4">🎯 친구 초대하고 수익 받기</h3>
+              <p className="text-xs text-tx-2 mb-4">내가 초대한 빌더가 툴을 판매하면, 판매액의 3~7%가 나에게!</p>
+
+              <div className="bg-bg-2 border border-bg-3 rounded-lg p-3 mb-4">
+                <p className="text-[10px] text-tx-3 mb-1">내 초대 링크</p>
+                <div className="flex gap-2">
+                  <input value={`${typeof window !== 'undefined' ? window.location.origin : ''}/register?ref=${referralData.referralCode || ''}`} readOnly className="flex-1 text-xs" />
+                  <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/register?ref=${referralData.referralCode}`); alert('복사됨!'); }}
+                    className="px-3 py-1.5 rounded-md bg-acc text-bg-0 text-[11px] font-semibold hover:brightness-110 flex-shrink-0">복사</button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-bg-2 border border-bg-3 rounded-lg p-3 text-center">
+                  <div className="text-lg font-semibold text-acc">{referralData.referralCount || 0}</div>
+                  <div className="text-[10px] text-tx-3">초대한 친구</div>
+                </div>
+                <div className="bg-bg-2 border border-bg-3 rounded-lg p-3 text-center">
+                  <div className="text-lg font-semibold text-acc-2">{referralData.activeBuilders || 0}</div>
+                  <div className="text-[10px] text-tx-3">활성 빌더</div>
+                </div>
+              </div>
+
+              <div className="text-[10px] text-tx-3 space-y-1">
+                <p>🎯 일반 — 초대 1명+ — 3%</p>
+                <p>🥈 실버 — 활성 빌더 5명 — 5% + 배지</p>
+                <p>🏆 골드 — 누적 판매 100만 — 7% + 프로필 노출</p>
+              </div>
+              {!process.env.NEXT_PUBLIC_PAYMENT_ENABLED && (
+                <p className="text-[10px] text-tx-3 mt-3">💡 결제 기능 활성화 후 리워드가 적용됩니다. 현재는 초대 현황만 확인 가능합니다.</p>
+              )}
+            </>
           )}
         </div>
       )}

@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import ToolCard from '@/components/ToolCard';
 import PostCard from '@/components/PostCard';
+import Badge from '@/components/Badge';
+import ShareButton from '@/components/ShareButton';
 
 function getYouTubeEmbedUrl(url) {
   if (!url) return null;
@@ -532,7 +534,10 @@ export default function HomePage() {
                             <div className="text-lg font-bold text-tx-3 w-6 text-center flex-shrink-0">{medal || idx + 1}</div>
                             <div className="flex-1 min-w-0">
                               <button onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)} className="text-sm font-semibold hover:text-acc transition-colors text-left mb-1">{entry.title}</button>
-                              <p className="text-[11px] text-tx-3 mb-1">by {entry.user?.name}</p>
+                              <div className="flex items-center gap-1 flex-wrap mb-1">
+                                <span className="text-[11px] text-tx-3">by {entry.user?.name}</span>
+                                {entry.user?.badges?.map(b => <Badge key={b} code={b} />)}
+                              </div>
                               <p className="text-xs text-tx-2 line-clamp-2">{entry.description}</p>
 
                               {/* Expanded detail */}
@@ -559,6 +564,7 @@ export default function HomePage() {
                                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${entry._liked ? 'bg-red-500/10 text-red-400' : 'bg-bg-2 text-tx-3 hover:bg-red-500/10 hover:text-red-400'}`}>
                                 {entry._liked ? '♥' : '♡'} {entry._count?.votes || 0}
                               </button>
+                              <ShareButton url={`${typeof window !== 'undefined' ? window.location.origin : ''}/contest/${contest.id}/entry/${entry.id}`} title={entry.title} />
                             </div>
                           </div>
                         </div>
@@ -566,6 +572,29 @@ export default function HomePage() {
                     </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Lucky draw */}
+              {contest.luckyDrawEnabled && (
+                <div className="bg-bg-1 border border-acc-5/20 rounded-xl p-5 mt-6">
+                  {contest.luckyDrawWinners?.length > 0 ? (
+                    <>
+                      <h3 className="text-sm font-semibold mb-3">🎲 럭키드로우 당첨자</h3>
+                      <p className="text-xs text-tx-2 mb-2">{contest.luckyDrawPrize}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {contest.luckyDrawWinners.map((id, i) => (
+                          <span key={i} className="text-[11px] px-2 py-1 rounded bg-acc-5/10 text-acc-5">{id.slice(0, 3)}***</span>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-sm font-semibold mb-2">🎲 투표하고 경품 받자!</h3>
+                      {contest.luckyDrawPrize && <p className="text-xs text-tx-2 mb-2">{contest.luckyDrawPrize}</p>}
+                      <p className="text-[11px] text-tx-3">출품작에 투표하면 자동 응모됩니다. 추첨으로 {contest.luckyDrawCount}명에게 경품을 드립니다.</p>
+                    </>
+                  )}
                 </div>
               )}
 

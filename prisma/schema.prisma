@@ -35,6 +35,9 @@ model User {
   role          Role     @default(USER)
   provider      String?  // kakao, google, etc.
   providerId    String?  // external provider user id
+  badges        String[] @default([])
+  referralCode  String?  @unique
+  referredBy    String?
   bankName      String?
   accountNumber String?
   accountHolder String?
@@ -48,9 +51,11 @@ model User {
   comments      Comment[]
   postLikes      PostLike[]
   notifications  Notification[]
-  settlements    Settlement[]
-  contestEntries ContestEntry[]
-  contestVotes   ContestVote[]
+  settlements       Settlement[]
+  contestEntries    ContestEntry[]
+  contestVotes      ContestVote[]
+  referralsGiven    ReferralReward[] @relation("Referrer")
+  referralsReceived ReferralReward[] @relation("Referred")
 }
 
 model Notification {
@@ -200,8 +205,12 @@ model Contest {
   votingEnd   DateTime?
   resultDate  DateTime?
   prizes      String?
-  rules       String?
-  createdAt   DateTime  @default(now())
+  rules             String?
+  luckyDrawEnabled  Boolean   @default(false)
+  luckyDrawPrize    String?
+  luckyDrawCount    Int       @default(10)
+  luckyDrawWinners  String[]  @default([])
+  createdAt         DateTime  @default(now())
 
   entries ContestEntry[]
 }
@@ -231,4 +240,17 @@ model ContestVote {
 
   user  User         @relation(fields: [userId], references: [id])
   entry ContestEntry @relation(fields: [entryId], references: [id])
+}
+
+model ReferralReward {
+  id         String   @id @default(uuid())
+  referrerId String
+  referredId String
+  paymentId  String?
+  amount     Int      @default(0)
+  status     String   @default("PENDING") // PENDING, PAID
+  createdAt  DateTime @default(now())
+
+  referrer User @relation("Referrer", fields: [referrerId], references: [id])
+  referred User @relation("Referred", fields: [referredId], references: [id])
 }

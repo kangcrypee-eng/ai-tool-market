@@ -8,7 +8,7 @@ export async function GET(req, { params }) {
     const entries = await prisma.contestEntry.findMany({
       where: { contestId: id, status: { not: 'REJECTED' } },
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, badges: true } },
         _count: { select: { votes: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -45,8 +45,13 @@ export async function POST(req, { params }) {
         tryUrl: tryUrl || null,
         images: Array.isArray(images) ? images.filter(u => typeof u === 'string').slice(0, 5) : [],
       },
-      include: { user: { select: { id: true, name: true } } },
+      include: { user: { select: { id: true, name: true, badges: true } } },
     });
+    // Auto-grant EARLY_BUILDER badge
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { badges: true } });
+    if (dbUser && !dbUser.badges.includes('EARLY_BUILDER')) {
+      await prisma.user.update({ where: { id: user.id }, data: { badges: { push: 'EARLY_BUILDER' } } });
+    }
     return NextResponse.json({ entry }, { status: 201 });
   } catch (e) {
     if (e.message === 'UNAUTHORIZED') return NextResponse.json({ error: '로그인 필요' }, { status: 401 });

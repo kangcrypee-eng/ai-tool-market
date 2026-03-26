@@ -19,7 +19,7 @@ export async function GET(req) {
     const user = getAuthFromRequest(req);
 
     const include = {
-      author: { select: { id: true, name: true } },
+      author: { select: { id: true, name: true, badges: true } },
       tool: { select: { id: true, name: true, category: true, oneTimePrice: true, freeTrialDays: true, publishedAt: true } },
       _count: { select: { comments: true, likes: true } },
     };
@@ -63,7 +63,7 @@ export async function POST(req) {
         images: Array.isArray(images) ? images.filter(u => typeof u === 'string' && /^https?:\/\//.test(u)).slice(0, 5) : [],
         toolId: toolId || null,
       },
-      include: { author: { select: { id: true, name: true } } },
+      include: { author: { select: { id: true, name: true, badges: true } } },
     });
     return NextResponse.json({ post }, { status: 201 });
   } catch (e) {
