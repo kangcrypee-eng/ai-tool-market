@@ -6,7 +6,7 @@ export default function PrivacyPage() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <Link href="/" className="text-xs text-tx-2 hover:text-tx-0 mb-6 inline-flex items-center gap-1">← 홈으로</Link>
       <h1 className="text-xl font-semibold mb-2">개인정보처리방침</h1>
-      <p className="text-xs text-tx-3 mb-8">최종 수정일: 2025년 3월 16일</p>
+      <p className="text-xs text-tx-3 mb-8">최종 수정일: 2026년 3월 27일</p>
 
       <div className="space-y-8 text-xs text-tx-2 leading-relaxed">
         <section>
@@ -93,8 +93,14 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-sm font-semibold text-tx-0 mb-3">9. 개인정보 보호책임자</h2>
           <div className="bg-bg-1 border border-bg-3 rounded-xl p-4 mt-3">
-            <p>이메일: contact@crypee.io</p>
-            <p className="mt-1">이용자는 서비스 이용 중 발생한 모든 개인정보 보호 관련 문의, 불만처리, 피해구제 등에 관한 사항을 위 연락처로 문의하실 수 있습니다.</p>
+            <p><b className="text-tx-1">회사명:</b> 주식회사 크리피솔루션즈</p>
+            <p className="mt-1"><b className="text-tx-1">대표:</b> 민동선</p>
+            <p className="mt-1"><b className="text-tx-1">사업자등록번호:</b> 173-87-02739</p>
+            <p className="mt-1"><b className="text-tx-1">통신판매업 신고번호:</b> 제 2025-서울강남-04832호</p>
+            <p className="mt-1"><b className="text-tx-1">주소:</b> 서울특별시 강남구 테헤란로 431, 에스7018호 (삼성동, 저스트코타워)</p>
+            <p className="mt-1"><b className="text-tx-1">이메일:</b> contact@crypee.io</p>
+            <p className="mt-1"><b className="text-tx-1">전화:</b> 010-5077-2773</p>
+            <p className="mt-2">이용자는 서비스 이용 중 발생한 모든 개인정보 보호 관련 문의, 불만처리, 피해구제 등에 관한 사항을 위 연락처로 문의하실 수 있습니다.</p>
           </div>
         </section>
 

@@ -6,12 +6,12 @@ export default function TermsPage() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <Link href="/" className="text-xs text-tx-2 hover:text-tx-0 mb-6 inline-flex items-center gap-1">← 홈으로</Link>
       <h1 className="text-xl font-semibold mb-2">이용약관</h1>
-      <p className="text-xs text-tx-3 mb-8">최종 수정일: 2025년 3월 16일</p>
+      <p className="text-xs text-tx-3 mb-8">최종 수정일: 2026년 3월 27일</p>
 
       <div className="space-y-8 text-xs text-tx-2 leading-relaxed">
         <section>
           <h2 className="text-sm font-semibold text-tx-0 mb-3">제1조 (목적)</h2>
-          <p>본 약관은 crypee(이하 "플랫폼")가 제공하는 AI 자동화 툴 커뮤니티 및 마켓 서비스(이하 "서비스")의 이용과 관련하여, 플랫폼과 이용자 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+          <p>본 약관은 주식회사 크리피솔루션즈(이하 "회사")가 운영하는 crypee(이하 "플랫폼")가 제공하는 AI 자동화 툴 커뮤니티 및 마켓 서비스(이하 "서비스")의 이용과 관련하여, 회사와 이용자 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
         </section>
 
         <section>
@@ -97,7 +97,11 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-bg-1 border border-bg-3 rounded-xl p-4 mt-8">
-          <p className="text-tx-3">본 약관에 대한 문의사항이 있으시면 contact@crypee.io로 연락주시기 바랍니다.</p>
+          <p className="text-tx-1 font-semibold mb-2">사업자 정보</p>
+          <p className="text-tx-3">주식회사 크리피솔루션즈 | 대표: 민동선</p>
+          <p className="text-tx-3">사업자등록번호: 173-87-02739 | 통신판매업 신고번호: 제 2025-서울강남-04832호</p>
+          <p className="text-tx-3">주소: 서울특별시 강남구 테헤란로 431, 에스7018호 (삼성동, 저스트코타워)</p>
+          <p className="text-tx-3 mt-2">문의: contact@crypee.io | 전화: 010-5077-2773</p>
         </section>
       </div>
     </div>
