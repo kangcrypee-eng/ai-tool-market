@@ -52,7 +52,7 @@ export async function POST(req) {
         creatorId: user.id,
         oneTimePrice: b.oneTimePrice ? parseInt(b.oneTimePrice, 10) : null,
         freeTrialDays: parseInt(b.freeTrialDays, 10) || 30,
-        status: user.role === 'ADMIN' ? 'APPROVED' : 'PENDING',
+        status: 'APPROVED',
       },
     });
     return NextResponse.json({ tool }, { status: 201 });
