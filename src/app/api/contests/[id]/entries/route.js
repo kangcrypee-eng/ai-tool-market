@@ -29,9 +29,6 @@ export async function POST(req, { params }) {
     if (!contest) return NextResponse.json({ error: '콘테스트를 찾을 수 없습니다.' }, { status: 404 });
     if (contest.status !== 'ACTIVE') return NextResponse.json({ error: '접수 기간이 아닙니다.' }, { status: 400 });
 
-    const existing = await prisma.contestEntry.findFirst({ where: { contestId: id, userId: user.id } });
-    if (existing) return NextResponse.json({ error: '이미 출품하셨습니다. 1인 1출품만 가능합니다.' }, { status: 400 });
-
     const { title, description, videoUrl, tryUrl, images } = await req.json();
     if (!title || !description) return NextResponse.json({ error: '제목과 설명은 필수입니다.' }, { status: 400 });
 

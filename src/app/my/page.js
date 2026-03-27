@@ -53,6 +53,17 @@ export default function MyPage() {
 
   const [referralData, setReferralData] = useState(null);
   const loadReferral = () => fetch('/api/referral').then(r => r.json()).then(setReferralData).catch(() => {});
+  const [myEntries, setMyEntries] = useState([]);
+  const loadMyEntries = () => fetch('/api/contests').then(r => r.json()).then(async d => {
+    const all = [];
+    for (const c of (d.contests || [])) {
+      const r2 = await fetch(`/api/contests/${c.id}`);
+      const d2 = await r2.json();
+      const mine = (d2.contest?.entries || []).filter(e => e.user?.id === user?.id);
+      all.push(...mine.map(e => ({ ...e, contestTitle: c.title })));
+    }
+    setMyEntries(all);
+  }).catch(() => {});
 
   if (authLoad || loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-20 bg-bg-2 rounded-xl" /><div className="h-40 bg-bg-2 rounded-xl" /></div></div>;
 
@@ -63,6 +74,7 @@ export default function MyPage() {
     { k: 'owned', l: `Owned (${data?.ownerships?.length || 0})` },
     { k: 'posts', l: `Posts (${data?.posts?.length || 0})` },
     ...(paymentEnabled ? [{ k: 'payments', l: `Payments` }] : []),
+    { k: 'entries', l: '출품작' },
     { k: 'referral', l: '친구 초대' },
   ];
 
@@ -208,6 +220,27 @@ export default function MyPage() {
       )}
 
       {/* Referral */}
+      {/* Contest Entries */}
+      {tab === 'entries' && (
+        <div className="space-y-2">
+          {myEntries.length === 0 ? (
+            <div className="text-center py-8">
+              <button onClick={loadMyEntries} className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">출품작 불러오기</button>
+            </div>
+          ) : (
+            myEntries.map(e => (
+              <div key={e.id} className="flex items-center gap-3 p-3 bg-bg-1 border border-bg-3 rounded-lg">
+                <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-sm">🏆</div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-semibold">{e.title}</h4>
+                  <p className="text-[10px] text-tx-3">{e.contestTitle} · ♥ {e._count?.votes || 0} · {e.status}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       {tab === 'referral' && (
         <div className="bg-bg-1 border border-bg-3 rounded-xl p-5">
           {!referralData ? (

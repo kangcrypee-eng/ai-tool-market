@@ -148,6 +148,15 @@ export default function HomePage() {
     finally { setSubmittingEntry(false); }
   };
 
+  const deleteEntry = async (entryId) => {
+    if (!confirm('출품작을 삭제하시겠습니까?')) return;
+    try {
+      const r = await fetch(`/api/contests/entries/${entryId}`, { method: 'DELETE' });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
+      setContestEntries(prev => prev.filter(e => e.id !== entryId));
+    } catch (e) { alert(e.message); }
+  };
+
   const likeEntry = async (entryId) => {
     if (!user) { alert('로그인이 필요합니다'); return; }
     setContestEntries(prev => prev.map(e => e.id === entryId ? { ...e, _count: { ...e._count, votes: (e._count?.votes || 0) + 1 }, _liked: true } : e));
@@ -189,7 +198,7 @@ export default function HomePage() {
       if (!r.ok) throw new Error(d.error);
       setToolForm({ name: '', description: '', longDescription: '', category: 'general', toolUrl: '', toolContent: '', oneTimePrice: '', freeTrialDays: '30' });
       setShowToolForm(false);
-      alert('툴이 등록되었습니다! 관리자 승인 후 마켓에 공개됩니다.');
+      alert('툴이 등록되었습니다! 마켓에서 확인해보세요.');
       loadTools();
     } catch (e) { alert(e.message); }
     finally { setPostingTool(false); }
@@ -208,20 +217,22 @@ export default function HomePage() {
       </div>
 
       {/* Notice banner */}
-      <div className="bg-gradient-to-r from-acc-2/[0.06] to-acc/[0.06] border border-acc-2/15 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-acc-5 flex-shrink-0 animate-pulse" />
-        <span className="text-xs text-tx-1">{process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true' ? '⚡ 모든 신규 툴은 등록 후 30일간 무료 체험 가능합니다' : '⚡ 현재 모든 툴은 무료로 이용 가능합니다'}</span>
-      </div>
+      {mode !== 'contest' && (
+        <div className="bg-gradient-to-r from-acc-2/[0.06] to-acc/[0.06] border border-acc-2/15 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-acc-5 flex-shrink-0 animate-pulse" />
+          <span className="text-xs text-tx-1">{process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true' ? '⚡ 모든 신규 툴은 등록 후 30일간 무료 체험 가능합니다' : '⚡ 현재 모든 툴은 무료로 이용 가능합니다'}</span>
+        </div>
+      )}
 
       {/* Search */}
-      <div className="relative mb-4 max-w-lg mx-auto">
+      {mode !== 'contest' && <div className="relative mb-4 max-w-lg mx-auto">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-tx-3 text-sm">🔍</span>
         <input placeholder={mode === 'community' ? '게시글 검색...' : '툴 검색...'} value={search} onChange={e => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5" />
-      </div>
+      </div>}
 
       {/* Categories */}
-      <div className="flex gap-1 flex-wrap mb-5 justify-center">
+      {mode !== 'contest' && <div className="flex gap-1 flex-wrap mb-5 justify-center">
         {(mode === 'market' ? TOOL_CATS : POST_CATS).map(c => (
           <button key={c.k}
             onClick={() => mode === 'market' ? setToolCat(c.k) : setPostCat(c.k)}
@@ -233,7 +244,7 @@ export default function HomePage() {
             {c.l}
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* ===== COMMUNITY MODE ===== */}
       {mode === 'community' && (
@@ -472,7 +483,7 @@ export default function HomePage() {
                           className="px-4 py-2 rounded-lg bg-white/[0.06] border border-white/10 text-xs text-tx-2 hover:bg-white/10">출품 가이드</button>
                       )}
                       {user && (
-                        <button onClick={() => setShowEntryForm(!showEntryForm)}
+                        <button onClick={() => { setShowEntryForm(!showEntryForm); setTimeout(() => document.getElementById('entry-form')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
                           className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">출품하기</button>
                       )}
                     </div>
@@ -487,7 +498,7 @@ export default function HomePage() {
 
               {/* Entry form */}
               {showEntryForm && contest.status === 'ACTIVE' && user && (
-                <div className="bg-bg-1 border border-acc/30 rounded-xl p-5 mb-6">
+                <div id="entry-form" className="bg-bg-1 border border-acc/30 rounded-xl p-5 mb-6">
                   <h3 className="text-sm font-semibold mb-3">출품하기</h3>
                   <form onSubmit={submitEntry} className="space-y-3">
                     <input value={entryForm.title} onChange={e => setEntryForm({...entryForm, title: e.target.value})} className="w-full" placeholder="제목 *" required />
@@ -536,6 +547,9 @@ export default function HomePage() {
                               <button onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)} className="text-sm font-semibold hover:text-acc transition-colors text-left mb-1">{entry.title}</button>
                               <div className="flex items-center gap-1 flex-wrap mb-1">
                                 <span className="text-[11px] text-tx-3">by {entry.user?.name}</span>
+                                {user && (entry.user?.id === user.id || user.role === 'ADMIN') && (
+                                  <button onClick={() => deleteEntry(entry.id)} className="text-[10px] text-red-400 hover:underline ml-1">삭제</button>
+                                )}
                                 {entry.user?.badges?.map(b => <Badge key={b} code={b} />)}
                               </div>
                               <p className="text-xs text-tx-2 line-clamp-2">{entry.description}</p>
