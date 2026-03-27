@@ -23,6 +23,8 @@ export default function MyPage() {
     if (authLoad) return;
     if (!user) { router.push('/login'); return; }
     load();
+    loadReferral();
+    loadMyEntries();
   }, [user, authLoad]);
 
   const load = () => fetch('/api/my').then(r => r.json()).then(setData).finally(() => setLoading(false));
@@ -54,16 +56,20 @@ export default function MyPage() {
   const [referralData, setReferralData] = useState(null);
   const loadReferral = () => fetch('/api/referral').then(r => r.json()).then(setReferralData).catch(() => {});
   const [myEntries, setMyEntries] = useState([]);
-  const loadMyEntries = () => fetch('/api/contests').then(r => r.json()).then(async d => {
-    const all = [];
-    for (const c of (d.contests || [])) {
-      const r2 = await fetch(`/api/contests/${c.id}`);
-      const d2 = await r2.json();
-      const mine = (d2.contest?.entries || []).filter(e => e.user?.id === user?.id);
-      all.push(...mine.map(e => ({ ...e, contestTitle: c.title })));
-    }
-    setMyEntries(all);
-  }).catch(() => {});
+  const loadMyEntries = async () => {
+    try {
+      const r = await fetch('/api/contests');
+      const d = await r.json();
+      const all = [];
+      for (const c of (d.contests || []).slice(0, 5)) {
+        const r2 = await fetch(`/api/contests/${c.id}`);
+        const d2 = await r2.json();
+        const mine = (d2.contest?.entries || []).filter(e => e.user?.id === user?.id);
+        all.push(...mine.map(e => ({ ...e, contestId: c.id, contestTitle: c.title })));
+      }
+      setMyEntries(all);
+    } catch {}
+  };
 
   if (authLoad || loading) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-20 bg-bg-2 rounded-xl" /><div className="h-40 bg-bg-2 rounded-xl" /></div></div>;
 
@@ -224,18 +230,17 @@ export default function MyPage() {
       {tab === 'entries' && (
         <div className="space-y-2">
           {myEntries.length === 0 ? (
-            <div className="text-center py-8">
-              <button onClick={loadMyEntries} className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">출품작 불러오기</button>
-            </div>
+            <div className="text-center py-12 text-tx-3"><div className="text-2xl mb-2">🏆</div><p className="text-xs">출품작이 없습니다</p></div>
           ) : (
             myEntries.map(e => (
-              <div key={e.id} className="flex items-center gap-3 p-3 bg-bg-1 border border-bg-3 rounded-lg">
+              <Link key={e.id} href={`/contest/${e.contestId}/entry/${e.id}`} className="flex items-center gap-3 p-3 bg-bg-1 border border-bg-3 rounded-lg hover:border-bg-4">
                 <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-sm">🏆</div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-semibold">{e.title}</h4>
-                  <p className="text-[10px] text-tx-3">{e.contestTitle} · ♥ {e._count?.votes || 0} · {e.status}</p>
+                  <h4 className="text-xs font-semibold hover:text-acc">{e.title}</h4>
+                  <p className="text-[10px] text-tx-3">{e.contestTitle} · ♥ {e._count?.votes || 0}</p>
                 </div>
-              </div>
+                <span className={`text-[9px] px-2 py-0.5 rounded font-semibold ${e.status?.startsWith('WINNER') ? 'bg-acc-5/10 text-acc-5' : 'bg-bg-3 text-tx-2'}`}>{e.status}</span>
+              </Link>
             ))
           )}
         </div>
@@ -244,9 +249,7 @@ export default function MyPage() {
       {tab === 'referral' && (
         <div className="bg-bg-1 border border-bg-3 rounded-xl p-5">
           {!referralData ? (
-            <div className="text-center py-8">
-              <button onClick={loadReferral} className="px-4 py-2 rounded-lg bg-acc text-bg-0 text-xs font-semibold hover:brightness-110">초대 정보 불러오기</button>
-            </div>
+            <div className="text-center py-8 text-tx-3 text-xs">불러오는 중...</div>
           ) : (
             <>
               <h3 className="text-sm font-semibold mb-4">🎯 친구 초대하고 수익 받기</h3>
