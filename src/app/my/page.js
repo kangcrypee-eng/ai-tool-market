@@ -168,6 +168,7 @@ export default function MyPage() {
                 <p className="text-[10px] text-tx-3">{t._count?.payments || 0} payments · <span className={t.status === 'APPROVED' ? 'text-acc-2' : t.status === 'PENDING' ? 'text-acc-5' : 'text-tx-3'}>{t.status}</span></p>
               </div>
               <button onClick={() => editTool(t)} className="text-xs text-acc hover:underline">Edit</button>
+              <button onClick={async () => { if (!confirm(`"${t.name}" 툴을 삭제하시겠습니까?`)) return; try { const r = await fetch(`/api/tools/${t.id}`, { method: 'DELETE' }); if (!r.ok) throw new Error('삭제 실패'); load(); } catch (e) { alert(e.message); } }} className="text-xs text-red-400 hover:underline">Delete</button>
             </div>
           ))}
         </div>

@@ -63,6 +63,7 @@ export default function HomePage() {
     return fetch(`/api/tools?${p}`).then(r => r.json()).then(d => setTools(d.tools || []));
   };
   const loadContest = async () => {
+    if (contest) { setContestLoading(false); return; } // cache
     setContestLoading(true);
     try {
       const r = await fetch('/api/contests');
@@ -83,9 +84,13 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    setLoading(true);
-    if (mode === 'contest') { loadContest().finally(() => setLoading(false)); }
-    else { (mode === 'market' ? loadTools() : loadPosts()).finally(() => setLoading(false)); }
+    if (mode === 'contest') {
+      if (!contest) { setLoading(true); loadContest().finally(() => setLoading(false)); }
+      else setLoading(false);
+    } else {
+      setLoading(true);
+      (mode === 'market' ? loadTools() : loadPosts()).finally(() => setLoading(false));
+    }
   }, [mode, toolCat, postCat, search, toolSort]);
 
   const handleLike = async (postId) => {
