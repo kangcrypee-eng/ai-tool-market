@@ -87,11 +87,19 @@ export default function HomePage() {
     if (mode === 'contest') {
       if (!contest) { setLoading(true); loadContest().finally(() => setLoading(false)); }
       else setLoading(false);
+    } else if (mode === 'market') {
+      setLoading(true);
+      loadTools().finally(() => setLoading(false));
     } else {
       setLoading(true);
-      (mode === 'market' ? loadTools() : loadPosts()).finally(() => setLoading(false));
+      loadPosts().finally(() => setLoading(false));
     }
   }, [mode, toolCat, postCat, search, toolSort]);
+
+  // Prefetch other tabs in background
+  useEffect(() => {
+    if (posts.length === 0) loadPosts().catch(() => {});
+  }, []);
 
   const handleLike = async (postId) => {
     if (!user) { alert('로그인이 필요합니다'); return; }

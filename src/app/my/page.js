@@ -22,12 +22,15 @@ export default function MyPage() {
   useEffect(() => {
     if (authLoad) return;
     if (!user) { router.push('/login'); return; }
-    load();
-    loadReferral();
-    loadMyEntries();
+    // Load all data in parallel
+    Promise.all([
+      fetch('/api/my').then(r => r.json()).then(setData),
+      fetch('/api/referral').then(r => r.json()).then(setReferralData).catch(() => {}),
+      loadMyEntries(),
+    ]).finally(() => setLoading(false));
   }, [user, authLoad]);
 
-  const load = () => fetch('/api/my').then(r => r.json()).then(setData).finally(() => setLoading(false));
+  const load = () => fetch('/api/my').then(r => r.json()).then(setData);
 
   const submitTool = async (e) => {
     e.preventDefault(); setBusy(true);
@@ -54,20 +57,20 @@ export default function MyPage() {
 
 
   const [referralData, setReferralData] = useState(null);
-  const loadReferral = () => fetch('/api/referral').then(r => r.json()).then(setReferralData).catch(() => {});
   const [myEntries, setMyEntries] = useState([]);
   const loadMyEntries = async () => {
     try {
       const r = await fetch('/api/contests');
       const d = await r.json();
-      const all = [];
-      for (const c of (d.contests || []).slice(0, 5)) {
-        const r2 = await fetch(`/api/contests/${c.id}`);
-        const d2 = await r2.json();
-        const mine = (d2.contest?.entries || []).filter(e => e.user?.id === user?.id);
-        all.push(...mine.map(e => ({ ...e, contestId: c.id, contestTitle: c.title })));
-      }
-      setMyEntries(all);
+      const results = await Promise.all(
+        (d.contests || []).slice(0, 5).map(c =>
+          fetch(`/api/contests/${c.id}`).then(r2 => r2.json()).then(d2 => {
+            const mine = (d2.contest?.entries || []).filter(e => e.user?.id === user?.id);
+            return mine.map(e => ({ ...e, contestId: c.id, contestTitle: c.title }));
+          }).catch(() => [])
+        )
+      );
+      setMyEntries(results.flat());
     } catch {}
   };
 
