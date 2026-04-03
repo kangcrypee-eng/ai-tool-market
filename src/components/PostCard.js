@@ -101,8 +101,10 @@ export default function PostCard({ post, onLike, onDelete, onTagClick }) {
     } catch (e) { alert(e.message); }
   };
 
+  const navigateToPost = () => { window.location.href = `/post/${post.id}`; };
+
   return (
-    <div className="bg-bg-1 border border-bg-3 rounded-xl p-3 sm:p-4 hover:border-bg-4 transition-colors">
+    <div className="bg-bg-1 border border-bg-3 rounded-xl p-3 sm:p-4 hover:border-bg-4 transition-colors cursor-pointer" onClick={navigateToPost}>
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-3">
         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-bg-3 flex items-center justify-center text-xs font-bold text-tx-1">{post.author?.name?.[0]}</div>
@@ -115,7 +117,7 @@ export default function PostCard({ post, onLike, onDelete, onTagClick }) {
         </div>
         <span className={`text-[9px] px-2 py-0.5 rounded font-semibold ${style.cls}`}>{style.label}</span>
         {canDelete && (
-          <div className="relative" ref={menuRef}>
+          <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
             <button onClick={() => setMenuOpen(!menuOpen)} className="text-tx-3 hover:text-tx-1 px-1 py-0.5 rounded hover:bg-bg-3 text-sm leading-none">⋯</button>
             {menuOpen && (
               <div className="absolute right-0 mt-1 w-28 bg-bg-1 rounded-lg border border-bg-3 py-1 text-xs z-50">
@@ -167,7 +169,7 @@ export default function PostCard({ post, onLike, onDelete, onTagClick }) {
       )}
 
       {/* Actions */}
-      <div className="flex gap-4 pt-2 border-t border-bg-2">
+      <div className="flex gap-4 pt-2 border-t border-bg-2" onClick={e => e.stopPropagation()}>
         <button
           onClick={() => onLike?.(post.id)}
           className={`text-[11px] flex items-center gap-1 transition-colors ${liked ? 'text-red-400' : 'text-tx-3 hover:text-tx-1'}`}
@@ -184,7 +186,7 @@ export default function PostCard({ post, onLike, onDelete, onTagClick }) {
 
       {/* Comments section */}
       {showComments && (
-        <div className="mt-3 pt-3 border-t border-bg-2">
+        <div className="mt-3 pt-3 border-t border-bg-2" onClick={e => e.stopPropagation()}>
           {/* Comment input */}
           {user ? (
             <form onSubmit={submitComment} className="flex gap-2 mb-3">
