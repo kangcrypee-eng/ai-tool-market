@@ -69,10 +69,14 @@ export default function SettingsPage() {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
-      setPwMsg({ type: 'ok', text: '비밀번호가 변경되었습니다.' });
+      setPwMsg({ type: 'ok', text: '비밀번호가 변경되었습니다. 다시 로그인해주세요.' });
       setCurrentPw('');
       setNewPw('');
       setConfirmPw('');
+      setTimeout(async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        router.push('/login');
+      }, 2000);
     } catch (e) {
       setPwMsg({ type: 'err', text: e.message });
     } finally {

@@ -32,6 +32,7 @@ export default function HomePage() {
   const [contest, setContest] = useState(null);
   const [contestEntries, setContestEntries] = useState([]);
   const [contestLoading, setContestLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [entryForm, setEntryForm] = useState({ title: '', description: '', videoUrl: '', tryUrl: '', images: '' });
   const [submittingEntry, setSubmittingEntry] = useState(false);
@@ -80,19 +81,22 @@ export default function HomePage() {
         setContest(null);
         setContestEntries([]);
       }
-    } catch {} finally { setContestLoading(false); }
+    } catch {
+      setLoadError('콘테스트 정보를 불러오지 못했습니다.');
+    } finally { setContestLoading(false); }
   };
 
   useEffect(() => {
+    setLoadError(null);
     if (mode === 'contest') {
       if (!contest) { setLoading(true); loadContest().finally(() => setLoading(false)); }
       else setLoading(false);
     } else if (mode === 'market') {
       setLoading(true);
-      loadTools().finally(() => setLoading(false));
+      loadTools().catch(() => setLoadError('툴 목록을 불러오지 못했습니다.')).finally(() => setLoading(false));
     } else {
       setLoading(true);
-      loadPosts().finally(() => setLoading(false));
+      loadPosts().catch(() => setLoadError('게시글을 불러오지 못했습니다.')).finally(() => setLoading(false));
     }
   }, [mode, toolCat, postCat, search, toolSort]);
 
@@ -343,6 +347,11 @@ export default function HomePage() {
           {/* Feed */}
           {loading ? (
             <div className="space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="bg-bg-1 border border-bg-3 rounded-xl animate-pulse h-36" />)}</div>
+          ) : loadError ? (
+            <div className="text-center py-16 text-tx-3">
+              <p className="text-sm mb-3">{loadError}</p>
+              <button onClick={() => { setLoadError(null); loadPosts(); }} className="text-xs text-acc hover:underline">다시 시도</button>
+            </div>
           ) : sortedPosts.length === 0 ? (
             <div className="text-center py-16 text-tx-3">
               <div className="text-3xl mb-2">📝</div>
@@ -438,6 +447,11 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {[...Array(6)].map((_, i) => <div key={i} className="bg-bg-1 border border-bg-3 rounded-xl overflow-hidden animate-pulse h-40" />)}
             </div>
+          ) : loadError ? (
+            <div className="text-center py-16 text-tx-3">
+              <p className="text-sm mb-3">{loadError}</p>
+              <button onClick={() => { setLoadError(null); loadTools(); }} className="text-xs text-acc hover:underline">다시 시도</button>
+            </div>
           ) : tools.length === 0 ? (
             <div className="text-center py-16 text-tx-3"><div className="text-3xl mb-2">🔍</div><p className="text-sm">등록된 툴이 없습니다</p></div>
           ) : (
@@ -451,6 +465,11 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto">
           {contestLoading ? (
             <div className="space-y-4"><div className="h-48 bg-bg-2 rounded-xl animate-pulse" /><div className="h-32 bg-bg-2 rounded-xl animate-pulse" /></div>
+          ) : loadError ? (
+            <div className="text-center py-16 text-tx-3">
+              <p className="text-sm mb-3">{loadError}</p>
+              <button onClick={() => { setLoadError(null); setContest(null); loadContest(); }} className="text-xs text-acc hover:underline">다시 시도</button>
+            </div>
           ) : !contest ? (
             <div className="text-center py-20">
               <div className="text-4xl mb-3">🏆</div>

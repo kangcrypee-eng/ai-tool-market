@@ -16,12 +16,18 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: '투표 기간이 아닙니다.' }, { status: 400 });
     }
 
-    await prisma.contestVote.create({
-      data: { userId: user.id, entryId },
+    const existing = await prisma.contestVote.findFirst({
+      where: { userId: user.id, entryId },
     });
 
+    if (existing) {
+      await prisma.contestVote.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.contestVote.create({ data: { userId: user.id, entryId } });
+    }
+
     const likes = await prisma.contestVote.count({ where: { entryId } });
-    return NextResponse.json({ likes });
+    return NextResponse.json({ likes, voted: !existing });
   } catch (e) {
     if (e.message === 'UNAUTHORIZED') return NextResponse.json({ error: '로그인 필요' }, { status: 401 });
     return NextResponse.json({ error: '실패' }, { status: 500 });
