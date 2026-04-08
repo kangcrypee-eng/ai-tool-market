@@ -5,6 +5,7 @@ import { isInFreeTrial } from '@/lib/payment';
 import { NextResponse } from 'next/server';
 
 const BUCKET = 'tool-files';
+const paymentEnabled = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true';
 
 export async function GET(req, { params }) {
   try {
@@ -24,13 +25,18 @@ export async function GET(req, { params }) {
     // Check access
     const isCreator = user && tool.creatorId === user.id;
     const isAdmin = user && user.role === 'ADMIN';
-    let hasAccess = isCreator || isAdmin || isInFreeTrial(tool);
 
-    if (!hasAccess && user) {
-      const ownership = await prisma.userToolOwnership.findUnique({
-        where: { userId_toolId: { userId: user.id, toolId: id } },
-      });
-      hasAccess = !!ownership;
+    let hasAccess;
+    if (!paymentEnabled) {
+      hasAccess = true;
+    } else {
+      hasAccess = isCreator || isAdmin || isInFreeTrial(tool);
+      if (!hasAccess && user) {
+        const ownership = await prisma.userToolOwnership.findUnique({
+          where: { userId_toolId: { userId: user.id, toolId: id } },
+        });
+        hasAccess = !!ownership;
+      }
     }
 
     if (!hasAccess) {

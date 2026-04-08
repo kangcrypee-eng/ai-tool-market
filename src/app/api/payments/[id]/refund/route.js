@@ -22,11 +22,11 @@ export async function POST(req, { params }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || '토스 환불 실패');
 
-    // Remove ownership + mark payment as refunded
-    await prisma.userToolOwnership.deleteMany({
-      where: { userId: payment.userId, toolId: payment.toolId },
-    });
-    await prisma.payment.update({ where: { id }, data: { status: 'REFUNDED' } });
+    // Remove ownership + mark payment as refunded (transaction)
+    await prisma.$transaction([
+      prisma.userToolOwnership.deleteMany({ where: { userId: payment.userId, toolId: payment.toolId } }),
+      prisma.payment.update({ where: { id }, data: { status: 'REFUNDED' } }),
+    ]);
 
     return NextResponse.json({ message: '환불이 완료되었습니다.', toss: data });
   } catch (e) {
