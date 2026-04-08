@@ -3,16 +3,10 @@ import { prisma } from '@/lib/prisma';
 export default async function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crypee-ai.vercel.app';
 
-  const tools = await prisma.tool.findMany({
-    where: { status: 'APPROVED' },
-    select: { id: true, updatedAt: true },
-  });
-
-  const posts = await prisma.post.findMany({
-    select: { id: true, updatedAt: true },
-    orderBy: { createdAt: 'desc' },
-    take: 200,
-  });
+  const [tools, posts] = await Promise.all([
+    prisma.tool.findMany({ where: { status: 'APPROVED' }, select: { id: true, updatedAt: true } }).catch(() => []),
+    prisma.post.findMany({ select: { id: true, updatedAt: true }, orderBy: { createdAt: 'desc' }, take: 200 }).catch(() => []),
+  ]);
 
   const staticPages = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
