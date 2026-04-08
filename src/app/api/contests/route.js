@@ -11,7 +11,9 @@ export async function GET() {
     // Sort: ACTIVE/VOTING first, then UPCOMING, then ENDED
     const order = { ACTIVE: 0, VOTING: 1, UPCOMING: 2, ENDED: 3 };
     contests.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
-    return NextResponse.json({ contests });
+    const response = NextResponse.json({ contests });
+    response.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    return response;
   } catch (e) {
     return NextResponse.json({ error: '조회 실패' }, { status: 500 });
   }

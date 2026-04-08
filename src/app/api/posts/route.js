@@ -34,7 +34,9 @@ export async function GET(req) {
       take: 50,
     });
 
-    return NextResponse.json({ posts });
+    const response = NextResponse.json({ posts });
+    response.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    return response;
   } catch (e) {
     return NextResponse.json({ error: '조회 실패' }, { status: 500 });
   }

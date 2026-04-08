@@ -54,14 +54,14 @@ export default function HomePage() {
     const p = new URLSearchParams();
     if (postCat !== 'all') p.set('type', postCat);
     if (search) p.set('search', search);
-    return fetch(`/api/posts?${p}`).then(r => r.json()).then(d => setPosts(d.posts || []));
+    return fetch(`/api/posts?${p}`, { next: { revalidate: 30 } }).then(r => r.json()).then(d => setPosts(d.posts || []));
   };
   const loadTools = () => {
     const p = new URLSearchParams();
     if (toolCat !== 'all') p.set('category', toolCat);
     if (search) p.set('search', search);
     if (toolSort !== 'latest') p.set('sort', toolSort);
-    return fetch(`/api/tools?${p}`).then(r => r.json()).then(d => setTools(d.tools || []));
+    return fetch(`/api/tools?${p}`, { next: { revalidate: 30 } }).then(r => r.json()).then(d => setTools(d.tools || []));
   };
   const loadContest = async () => {
     if (contest) { setContestLoading(false); return; } // cache

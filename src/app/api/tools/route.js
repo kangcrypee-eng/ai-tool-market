@@ -28,7 +28,9 @@ export async function GET(req) {
       orderBy: sort === 'popular' ? [{ viewCount: 'desc' }, { createdAt: 'desc' }] : { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ tools });
+    const response = NextResponse.json({ tools });
+    response.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    return response;
   } catch (e) {
     return NextResponse.json({ error: '조회 실패' }, { status: 500 });
   }

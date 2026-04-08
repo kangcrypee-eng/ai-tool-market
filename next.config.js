@@ -4,4 +4,7 @@ module.exports = {
   experimental: {
     serverMinification: true,
   },
+  outputFileTracingIncludes: {
+    '/*': ['./node_modules/.prisma/**/*'],
+  },
 };
