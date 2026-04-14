@@ -82,6 +82,28 @@ export default function AdminPage() {
       body: JSON.stringify({ entries: [{ entryId, status }] }),
     });
     loadContests();
+    if (selectedContest === contestId) loadContestEntries(contestId);
+  };
+
+  const [contestEntries, setContestEntries] = useState([]);
+  const [entriesLoading, setEntriesLoading] = useState(false);
+  const [expandedContest, setExpandedContest] = useState(null);
+
+  const loadContestEntries = async (contestId) => {
+    setEntriesLoading(true);
+    try {
+      const r = await fetch(`/api/contests/${contestId}`);
+      const d = await r.json();
+      setContestEntries(d.contest?.entries || []);
+    } finally { setEntriesLoading(false); }
+  };
+
+  const setContestStatus = async (contestId, status) => {
+    await fetch(`/api/contests/${contestId}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    loadContests();
   };
 
   const tabs = ['overview', 'tools', 'posts', 'users', 'payments', 'contests'];
@@ -308,14 +330,53 @@ export default function AdminPage() {
                   <th className="text-right px-4 py-2.5">Actions</th>
                 </tr></thead>
                 <tbody>{contests.map(c => (
-                  <tr key={c.id} className="border-t border-bg-2 hover:bg-bg-2">
-                    <td className="px-4 py-2.5 font-semibold">{c.title}</td>
-                    <td className="px-4 py-2.5"><span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${c.status === 'ACTIVE' ? 'bg-acc-2/10 text-acc-2' : c.status === 'VOTING' ? 'bg-acc/10 text-acc' : c.status === 'ENDED' ? 'bg-bg-3 text-tx-3' : 'bg-acc-5/10 text-acc-5'}`}>{c.status}</span></td>
-                    <td className="px-4 py-2.5 text-tx-3">{c._count?.entries || 0}</td>
-                    <td className="px-4 py-2.5 text-right space-x-1">
-                      <button onClick={() => { setSelectedContest(c.id); setContestForm({ title: c.title, description: c.description, bannerText: c.bannerText || '', startDate: c.startDate?.slice(0,10) || '', endDate: c.endDate?.slice(0,10) || '', votingEnd: c.votingEnd?.slice(0,10) || '', resultDate: c.resultDate?.slice(0,10) || '', prizes: c.prizes || '', rules: c.rules || '', status: c.status }); }} className="text-[10px] px-2 py-0.5 rounded bg-acc/10 text-acc hover:bg-acc/20">Edit</button>
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={c.id} className="border-t border-bg-2 hover:bg-bg-2">
+                      <td className="px-4 py-2.5 font-semibold">{c.title}</td>
+                      <td className="px-4 py-2.5"><span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${c.status === 'ACTIVE' ? 'bg-acc-2/10 text-acc-2' : c.status === 'VOTING' ? 'bg-acc/10 text-acc' : c.status === 'ENDED' ? 'bg-bg-3 text-tx-3' : 'bg-acc-5/10 text-acc-5'}`}>{c.status}</span></td>
+                      <td className="px-4 py-2.5 text-tx-3">{c._count?.entries || 0}</td>
+                      <td className="px-4 py-2.5 text-right space-x-1">
+                        {c.status === 'UPCOMING' && <button onClick={() => setContestStatus(c.id, 'ACTIVE')} className="text-[10px] px-2 py-0.5 rounded bg-acc-2/10 text-acc-2 hover:bg-acc-2/20">접수 시작</button>}
+                        {c.status === 'ACTIVE' && <button onClick={() => setContestStatus(c.id, 'VOTING')} className="text-[10px] px-2 py-0.5 rounded bg-acc/10 text-acc hover:bg-acc/20">투표 시작</button>}
+                        {c.status === 'VOTING' && <button onClick={() => setContestStatus(c.id, 'ENDED')} className="text-[10px] px-2 py-0.5 rounded bg-bg-3 text-tx-2 hover:bg-bg-4">종료</button>}
+                        <button onClick={() => { setSelectedContest(c.id); setContestForm({ title: c.title, description: c.description, bannerText: c.bannerText || '', startDate: c.startDate?.slice(0,10) || '', endDate: c.endDate?.slice(0,10) || '', votingEnd: c.votingEnd?.slice(0,10) || '', resultDate: c.resultDate?.slice(0,10) || '', prizes: c.prizes || '', rules: c.rules || '', status: c.status }); }} className="text-[10px] px-2 py-0.5 rounded bg-acc/10 text-acc hover:bg-acc/20">Edit</button>
+                        <button onClick={() => { setExpandedContest(expandedContest === c.id ? null : c.id); if (expandedContest !== c.id) loadContestEntries(c.id); }} className="text-[10px] px-2 py-0.5 rounded bg-bg-3 text-tx-2 hover:bg-bg-4">출품작</button>
+                      </td>
+                    </tr>
+                    {expandedContest === c.id && (
+                      <tr key={`${c.id}-entries`} className="border-t border-bg-2 bg-bg-0">
+                        <td colSpan={4} className="px-4 py-3">
+                          {entriesLoading ? (
+                            <div className="text-xs text-tx-3">불러오는 중...</div>
+                          ) : contestEntries.length === 0 ? (
+                            <div className="text-xs text-tx-3">출품작 없음</div>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {contestEntries.map((entry, idx) => (
+                                <div key={entry.id} className="flex items-center gap-3 text-xs bg-bg-1 rounded-lg px-3 py-2">
+                                  <span className="text-tx-3 w-4">{idx + 1}</span>
+                                  <span className="font-semibold flex-1 truncate">{entry.title}</span>
+                                  <span className="text-tx-3">{entry.user?.name}</span>
+                                  <span className="text-tx-3">♥ {entry._count?.votes || 0}</span>
+                                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${entry.status === 'WINNER_1' ? 'bg-yellow-500/20 text-yellow-400' : entry.status === 'WINNER_2' ? 'bg-gray-400/20 text-gray-300' : entry.status === 'WINNER_3' ? 'bg-orange-500/20 text-orange-400' : 'bg-bg-3 text-tx-3'}`}>
+                                    {entry.status === 'WINNER_1' ? '🥇 1위' : entry.status === 'WINNER_2' ? '🥈 2위' : entry.status === 'WINNER_3' ? '🥉 3위' : entry.status}
+                                  </span>
+                                  <div className="flex gap-1">
+                                    {['WINNER_1','WINNER_2','WINNER_3'].map(w => (
+                                      <button key={w} onClick={() => setWinner(c.id, entry.id, entry.status === w ? 'APPROVED' : w)}
+                                        className={`text-[9px] px-1.5 py-0.5 rounded ${entry.status === w ? 'bg-acc text-bg-0' : 'bg-bg-3 text-tx-3 hover:bg-bg-4'}`}>
+                                        {w === 'WINNER_1' ? '🥇' : w === 'WINNER_2' ? '🥈' : '🥉'}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}</tbody>
               </table>
             )}
