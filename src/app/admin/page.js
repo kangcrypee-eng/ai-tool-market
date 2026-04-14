@@ -12,12 +12,16 @@ export default function AdminPage() {
   const router = useRouter();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [tab, setTab] = useState('overview');
   const [deleting, setDeleting] = useState(null);
   const [contestForm, setContestForm] = useState({ title: '', description: '', bannerText: '', startDate: '', endDate: '', votingEnd: '', resultDate: '', prizes: '', rules: '', status: 'UPCOMING' });
   const [contests, setContests] = useState([]);
   const [contestBusy, setContestBusy] = useState(false);
   const [selectedContest, setSelectedContest] = useState(null);
+  const [contestEntries, setContestEntries] = useState([]);
+  const [entriesLoading, setEntriesLoading] = useState(false);
+  const [expandedContest, setExpandedContest] = useState(null);
 
   useEffect(() => {
     if (authLoad) return;
@@ -25,7 +29,6 @@ export default function AdminPage() {
     load();
   }, [user, authLoad]);
 
-  const [loadError, setLoadError] = useState(null);
   const load = () => {
     setLoadError(null);
     return fetch('/api/admin')
@@ -85,19 +88,6 @@ export default function AdminPage() {
     finally { setContestBusy(false); }
   };
 
-  const setWinner = async (contestId, entryId, status) => {
-    await fetch(`/api/admin/contests/${contestId}/winners`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entries: [{ entryId, status }] }),
-    });
-    loadContests();
-    if (selectedContest === contestId) loadContestEntries(contestId);
-  };
-
-  const [contestEntries, setContestEntries] = useState([]);
-  const [entriesLoading, setEntriesLoading] = useState(false);
-  const [expandedContest, setExpandedContest] = useState(null);
-
   const loadContestEntries = async (contestId) => {
     setEntriesLoading(true);
     try {
@@ -105,6 +95,15 @@ export default function AdminPage() {
       const d = await r.json();
       setContestEntries(d.contest?.entries || []);
     } finally { setEntriesLoading(false); }
+  };
+
+  const setWinner = async (contestId, entryId, status) => {
+    await fetch(`/api/admin/contests/${contestId}/winners`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: [{ entryId, status }] }),
+    });
+    loadContests();
+    if (selectedContest === contestId) loadContestEntries(contestId);
   };
 
   const setContestStatus = async (contestId, status) => {
