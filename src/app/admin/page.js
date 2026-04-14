@@ -25,7 +25,15 @@ export default function AdminPage() {
     load();
   }, [user, authLoad]);
 
-  const load = () => fetch('/api/admin').then(r => r.json()).then(setData).finally(() => setLoading(false));
+  const [loadError, setLoadError] = useState(null);
+  const load = () => {
+    setLoadError(null);
+    return fetch('/api/admin')
+      .then(r => r.json())
+      .then(d => { if (d.error) throw new Error(d.error); setData(d); })
+      .catch(e => setLoadError(e.message || '데이터 로드 실패'))
+      .finally(() => setLoading(false));
+  };
 
   const setStatus = async (toolId, status) => {
     await fetch(`/api/admin/tools/${toolId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
@@ -55,6 +63,7 @@ export default function AdminPage() {
   };
 
   if (authLoad || loading) return <div className="max-w-5xl mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-8 bg-bg-2 rounded w-1/4" /><div className="grid grid-cols-4 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-bg-2 rounded-xl" />)}</div></div></div>;
+  if (loadError) return <div className="max-w-5xl mx-auto px-4 py-8 text-center"><p className="text-sm text-red-400 mb-3">{loadError}</p><button onClick={load} className="text-xs text-acc hover:underline">다시 시도</button></div>;
 
   const s = data?.stats;
 
