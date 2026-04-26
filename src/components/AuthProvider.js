@@ -3,11 +3,12 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 
 const Ctx = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export function AuthProvider({ children, initialUser = null }) {
+  const [user, setUser] = useState(initialUser);
+  const [loading, setLoading] = useState(false);
 
   const fetchUser = useCallback(async () => {
+    setLoading(true);
     try {
       const r = await fetch('/api/auth/me');
       if (r.ok) { const d = await r.json(); setUser(d.user); }
@@ -16,7 +17,9 @@ export function AuthProvider({ children }) {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchUser(); }, [fetchUser]);
+  useEffect(() => {
+    if (!initialUser) fetchUser();
+  }, []);
 
   const login = async (email, password) => {
     const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });

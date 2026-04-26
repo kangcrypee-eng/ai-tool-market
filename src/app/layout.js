@@ -1,4 +1,6 @@
 import './globals.css';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 import { AuthProvider } from '@/components/AuthProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -21,10 +23,14 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const cookieStore = cookies();
+  const token = cookieStore.get('token')?.value;
+  const initialUser = token ? verifyToken(token) : null;
+
   return (
     <html lang="ko">
       <body>
-        <AuthProvider>
+        <AuthProvider initialUser={initialUser}>
           <Header />
           <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
           <Footer />
